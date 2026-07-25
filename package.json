@@ -1,0 +1,13 @@
+{
+  "name": "fe-setpoint",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Set Point frontend and Prisma schema workspace",
+  "scripts": {
+    "prisma:format": "prisma format",
+    "prisma:validate": "prisma validate"
+  },
+  "devDependencies": {
+    "prisma": "^6.19.0"
+  }
+}

@@ -1,0 +1,514 @@
+// -----------------------------------------------------------------------------
+// Set Point Prisma Schema
+//
+// Version: 0.1.0
+//
+// Purpose:
+// Initial Prisma schema implementation.
+//
+// Generated From:
+// - Physical Database Design v0.1.1
+// - Prisma Schema Specification v0.1.1
+//
+// Status:
+// Step 1 Completed — Datasource, Generator, Prisma Enums
+// Step 2 Completed — Foundation Models
+// Step 3 Completed — Competition Models
+// Step 4 Completed — Versioning Models
+//
+// NOTE:
+// This file is generated incrementally following the
+// Prisma Generation Order defined in the Prisma Schema Specification.
+//
+// Do not manually redesign models.
+// Physical Database Design remains the source of truth.
+//
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Enums (17) — mapped to PostgreSQL enum type names
+// -----------------------------------------------------------------------------
+
+enum TournamentStatus {
+  draft
+  setup
+  published
+  live
+  finished
+  archived
+
+  @@map("tournament_status")
+}
+
+enum MatchStatus {
+  waiting
+  warm_up
+  live
+  finished
+  verified
+
+  @@map("match_status")
+}
+
+enum VersionStatus {
+  candidate
+  official
+  historical
+
+  @@map("version_status")
+}
+
+enum PublishState {
+  unpublished
+  published
+
+  @@map("publish_state")
+}
+
+enum LockState {
+  unlocked
+  locked
+
+  @@map("lock_state")
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+
+  @@map("review_status")
+}
+
+enum Visibility {
+  private
+  public
+
+  @@map("visibility")
+}
+
+enum CourtStatus {
+  available
+  unavailable
+  maintenance
+
+  @@map("court_status")
+}
+
+enum TeamStatus {
+  active
+  withdrawn
+
+  @@map("team_status")
+}
+
+enum PlayerStatus {
+  active
+  replaced
+  inactive
+
+  @@map("player_status")
+}
+
+enum EligibilityStatus {
+  eligible
+  ineligible
+
+  @@map("eligibility_status")
+}
+
+enum QualificationStatus {
+  qualified
+  not_qualified
+
+  @@map("qualification_status")
+}
+
+enum ResultStatus {
+  pending
+  normal
+  cancelled
+  abandoned
+  corrected
+
+  @@map("result_status")
+}
+
+enum AssignmentStatus {
+  active
+  inactive
+
+  @@map("assignment_status")
+}
+
+enum ConflictStatus {
+  unknown
+  clear
+  conflict
+
+  @@map("conflict_status")
+}
+
+enum DeclarationStatus {
+  declared
+
+  @@map("declaration_status")
+}
+
+enum ArtifactType {
+  drawing
+  schedule
+  playoff
+  bracket
+
+  @@map("artifact_type")
+}
+
+// -----------------------------------------------------------------------------
+// Foundation Models
+// -----------------------------------------------------------------------------
+
+model Tournament {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  name                String           @db.VarChar(200)
+  description         String?
+  status              TournamentStatus @default(draft)
+  registrationOpenAt  DateTime?        @map("registration_open_at") @db.Timestamptz(6)
+  registrationCloseAt DateTime?        @map("registration_close_at") @db.Timestamptz(6)
+  startAt             DateTime?        @map("start_at") @db.Timestamptz(6)
+  endAt               DateTime?        @map("end_at") @db.Timestamptz(6)
+  visibility          Visibility       @default(private)
+  publishState        PublishState     @default(unpublished) @map("publish_state")
+  publishedAt         DateTime?        @map("published_at") @db.Timestamptz(6)
+  publishedBy         String?          @map("published_by") @db.Uuid
+  rowVersion          Int              @default(1) @map("row_version")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  categories Category[] @relation("TournamentCategories")
+  courts     Court[]    @relation("TournamentCourts")
+  sponsors   Sponsor[]  @relation("TournamentSponsors")
+  gallery    Gallery?   @relation("TournamentGallery")
+
+  @@index([status], map: "idx_tournaments_status")
+  @@map("tournaments")
+}
+
+model Court {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  tournamentId String @map("tournament_id") @db.Uuid
+
+  name              String      @db.VarChar(200)
+  label             String      @db.VarChar(50)
+  status            CourtStatus @default(available)
+  availabilityNotes String?     @map("availability_notes")
+  rowVersion        Int         @default(1) @map("row_version")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  tournament Tournament @relation("TournamentCourts", fields: [tournamentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([tournamentId], map: "idx_courts_tournament")
+  @@map("courts")
+}
+
+model Sponsor {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  tournamentId String @map("tournament_id") @db.Uuid
+
+  name         String     @db.VarChar(200)
+  displayOrder Int        @default(0) @map("display_order")
+  visibility   Visibility @default(public)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  tournament Tournament @relation("TournamentSponsors", fields: [tournamentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("sponsors")
+}
+
+model Gallery {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  tournamentId String @unique(map: "uq_galleries_tournament") @map("tournament_id") @db.Uuid
+
+  title      String     @db.VarChar(200)
+  visibility Visibility @default(public)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  tournament   Tournament    @relation("TournamentGallery", fields: [tournamentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  galleryItems GalleryItem[] @relation("GalleryItems")
+
+  @@map("galleries")
+}
+
+model GalleryItem {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  galleryId String @map("gallery_id") @db.Uuid
+
+  mediaTitle     String?    @map("media_title") @db.VarChar(200)
+  mediaReference String     @map("media_reference")
+  displayOrder   Int        @default(0) @map("display_order")
+  visibility     Visibility @default(public)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  gallery Gallery @relation("GalleryItems", fields: [galleryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("gallery_items")
+}
+
+// -----------------------------------------------------------------------------
+// Competition Models
+// -----------------------------------------------------------------------------
+
+model Category {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  tournamentId String @map("tournament_id") @db.Uuid
+
+  name   String @db.VarChar(200)
+  format String @db.VarChar(100)
+
+  visibility   Visibility   @default(private)
+  publishState PublishState @default(unpublished) @map("publish_state")
+  publishedAt  DateTime?    @map("published_at") @db.Timestamptz(6)
+  publishedBy  String?      @map("published_by") @db.Uuid
+
+  lockState    LockState @default(unlocked) @map("lock_state")
+  lockedAt     DateTime? @map("locked_at") @db.Timestamptz(6)
+  lockedBy     String?   @map("locked_by") @db.Uuid
+  unlockReason String?   @map("unlock_reason")
+  unlockedAt   DateTime? @map("unlocked_at") @db.Timestamptz(6)
+  unlockedBy   String?   @map("unlocked_by") @db.Uuid
+
+  configuration Json? @map("configuration") @db.JsonB
+  rowVersion    Int   @default(1) @map("row_version")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  tournament Tournament @relation("TournamentCategories", fields: [tournamentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  teams      Team[]     @relation("CategoryTeams")
+  drawing    Drawing?   @relation("CategoryDrawing")
+  schedule   Schedule?  @relation("CategorySchedule")
+
+  @@index([tournamentId], map: "idx_categories_tournament")
+  @@map("categories")
+}
+
+model Team {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  categoryId String @map("category_id") @db.Uuid
+
+  name             String  @db.VarChar(200)
+  withdrawalFlag   Boolean @default(false) @map("withdrawal_flag")
+  withdrawalReason String? @map("withdrawal_reason")
+
+  status            TeamStatus        @default(active)
+  eligibilityStatus EligibilityStatus @default(ineligible) @map("eligibility_status")
+  rowVersion        Int               @default(1) @map("row_version")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  category Category @relation("CategoryTeams", fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  players  Player[] @relation("TeamPlayers")
+
+  @@index([categoryId], map: "idx_teams_category")
+  @@map("teams")
+}
+
+model Player {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  teamId String @map("team_id") @db.Uuid
+
+  displayName     String  @map("display_name") @db.VarChar(200)
+  replacementFlag Boolean @default(false) @map("replacement_flag")
+
+  status     PlayerStatus @default(active)
+  rowVersion Int          @default(1) @map("row_version")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  team Team @relation("TeamPlayers", fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([teamId], map: "idx_players_team")
+  @@map("players")
+}
+
+// -----------------------------------------------------------------------------
+// Versioning Models
+// -----------------------------------------------------------------------------
+
+model Drawing {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  categoryId               String  @unique(map: "uq_drawings_category") @map("category_id") @db.Uuid
+  currentOfficialVersionId String? @unique @map("current_official_version_id") @db.Uuid
+
+  reviewStatus ReviewStatus @default(pending) @map("review_status")
+  publishState PublishState @default(unpublished) @map("publish_state")
+  publishedAt  DateTime?    @map("published_at") @db.Timestamptz(6)
+  publishedBy  String?      @map("published_by") @db.Uuid
+
+  lockState    LockState @default(unlocked) @map("lock_state")
+  lockedAt     DateTime? @map("locked_at") @db.Timestamptz(6)
+  lockedBy     String?   @map("locked_by") @db.Uuid
+  unlockReason String?   @map("unlock_reason")
+  unlockedAt   DateTime? @map("unlocked_at") @db.Timestamptz(6)
+  unlockedBy   String?   @map("unlocked_by") @db.Uuid
+
+  rowVersion Int @default(1) @map("row_version")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  category               Category         @relation("CategoryDrawing", fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  currentOfficialVersion DrawingVersion?  @relation("DrawingOfficialVersion", fields: [currentOfficialVersionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  versions               DrawingVersion[] @relation("DrawingVersions")
+
+  @@map("drawings")
+}
+
+model DrawingVersion {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  drawingId String @map("drawing_id") @db.Uuid
+
+  versionNumber    Int           @map("version_number")
+  drawingSeed      String        @map("drawing_seed") @db.VarChar(128)
+  officialFlag     Boolean       @default(false) @map("official_flag")
+  generationSource String        @default("engine") @map("generation_source") @db.VarChar(50)
+  versionStatus    VersionStatus @default(candidate) @map("version_status")
+  reviewOutcome    ReviewStatus? @map("review_outcome")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+
+  drawing            Drawing  @relation("DrawingVersions", fields: [drawingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  officialForDrawing Drawing? @relation("DrawingOfficialVersion")
+
+  @@unique([drawingId, versionNumber], map: "uq_drawing_versions_number")
+  @@index([drawingId], map: "idx_drawing_versions_drawing")
+  @@map("drawing_versions")
+}
+
+model Schedule {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  categoryId               String  @unique(map: "uq_schedules_category") @map("category_id") @db.Uuid
+  currentOfficialVersionId String? @unique @map("current_official_version_id") @db.Uuid
+
+  reviewStatus ReviewStatus @default(pending) @map("review_status")
+  publishState PublishState @default(unpublished) @map("publish_state")
+  publishedAt  DateTime?    @map("published_at") @db.Timestamptz(6)
+  publishedBy  String?      @map("published_by") @db.Uuid
+
+  lockState    LockState @default(unlocked) @map("lock_state")
+  lockedAt     DateTime? @map("locked_at") @db.Timestamptz(6)
+  lockedBy     String?   @map("locked_by") @db.Uuid
+  unlockReason String?   @map("unlock_reason")
+  unlockedAt   DateTime? @map("unlocked_at") @db.Timestamptz(6)
+  unlockedBy   String?   @map("unlocked_by") @db.Uuid
+
+  rowVersion Int @default(1) @map("row_version")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  category               Category          @relation("CategorySchedule", fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  currentOfficialVersion ScheduleVersion?  @relation("ScheduleOfficialVersion", fields: [currentOfficialVersionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  versions               ScheduleVersion[] @relation("ScheduleVersions")
+
+  @@map("schedules")
+}
+
+model ScheduleVersion {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  scheduleId String @map("schedule_id") @db.Uuid
+
+  versionNumber    Int            @map("version_number")
+  officialFlag     Boolean        @default(false) @map("official_flag")
+  generationSource String         @default("engine") @map("generation_source") @db.VarChar(50)
+  versionStatus    VersionStatus  @default(candidate) @map("version_status")
+  reviewOutcome    ReviewStatus?  @map("review_outcome")
+  conflictStatus   ConflictStatus @default(unknown) @map("conflict_status")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+
+  schedule            Schedule  @relation("ScheduleVersions", fields: [scheduleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  officialForSchedule Schedule? @relation("ScheduleOfficialVersion")
+
+  @@unique([scheduleId, versionNumber], map: "uq_schedule_versions_number")
+  @@index([scheduleId], map: "idx_schedule_versions_schedule")
+  @@map("schedule_versions")
+}
