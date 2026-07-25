@@ -16,6 +16,7 @@
 // Step 3 Completed — Competition Models
 // Step 4 Completed — Versioning Models
 // Step 5 Completed — Competition Runtime Models
+// Step 6 Completed — Playoff Models
 //
 // NOTE:
 // This file is generated incrementally following the
@@ -347,6 +348,8 @@ model Category {
   groups     Group[]    @relation("CategoryGroups")
   matches    Match[]    @relation("CategoryMatches")
   standings  Standing[] @relation("CategoryStandings")
+  playoff    Playoff?   @relation("CategoryPlayoff")
+  champions  Champion[] @relation("ChampionCategory")
 
   @@index([tournamentId], map: "idx_categories_tournament")
   @@map("categories")
@@ -378,6 +381,7 @@ model Team {
   groupMembers        GroupMember[]        @relation("TeamGroupMembers")
   matchParticipations MatchParticipation[] @relation("TeamMatchParticipations")
   standings           Standing[]           @relation("StandingTeam")
+  championships       Champion[]           @relation("ChampionTeam")
 
   @@index([categoryId], map: "idx_teams_category")
   @@map("teams")
@@ -619,6 +623,8 @@ model Match {
 
   category        Category             @relation("CategoryMatches", fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   group           Group?               @relation("GroupMatches", fields: [groupId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  playoff         Playoff?             @relation("PlayoffMatches", fields: [playoffId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  bracket         Bracket?             @relation("BracketMatches", fields: [bracketId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   scheduleVersion ScheduleVersion?     @relation("MatchScheduleVersion", fields: [scheduleVersionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   court           Court?               @relation("MatchCourt", fields: [courtId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   participations  MatchParticipation[] @relation("MatchParticipations")
@@ -720,4 +726,99 @@ model ScheduleEntry {
   @@index([scheduleVersionId], map: "idx_schedule_entries_version")
   @@index([courtId, scheduledStartAt], map: "idx_schedule_entries_court_time")
   @@map("schedule_entries")
+}
+
+// -----------------------------------------------------------------------------
+// Playoff Models
+// -----------------------------------------------------------------------------
+
+model Playoff {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  categoryId               String  @unique(map: "uq_playoffs_category") @map("category_id") @db.Uuid
+  currentOfficialBracketId String? @unique @map("current_official_bracket_id") @db.Uuid
+
+  qualificationBasis String? @map("qualification_basis")
+
+  reviewStatus ReviewStatus @default(pending) @map("review_status")
+  publishState PublishState @default(unpublished) @map("publish_state")
+  publishedAt  DateTime?    @map("published_at") @db.Timestamptz(6)
+  publishedBy  String?      @map("published_by") @db.Uuid
+
+  lockState    LockState @default(unlocked) @map("lock_state")
+  lockedAt     DateTime? @map("locked_at") @db.Timestamptz(6)
+  lockedBy     String?   @map("locked_by") @db.Uuid
+  unlockReason String?   @map("unlock_reason")
+  unlockedAt   DateTime? @map("unlocked_at") @db.Timestamptz(6)
+  unlockedBy   String?   @map("unlocked_by") @db.Uuid
+
+  rowVersion Int @default(1) @map("row_version")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  category               Category  @relation("CategoryPlayoff", fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  currentOfficialBracket Bracket?  @relation("PlayoffOfficialBracket", fields: [currentOfficialBracketId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  brackets               Bracket[] @relation("PlayoffBrackets")
+  matches                Match[]   @relation("PlayoffMatches")
+  champion               Champion? @relation("PlayoffChampion")
+
+  @@map("playoffs")
+}
+
+model Bracket {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  playoffId String @map("playoff_id") @db.Uuid
+
+  versionNumber    Int     @map("version_number")
+  officialFlag     Boolean @default(false) @map("official_flag")
+  generationSource String  @default("engine") @map("generation_source") @db.VarChar(50)
+
+  versionStatus VersionStatus @default(candidate) @map("version_status")
+  publishState  PublishState  @default(unpublished) @map("publish_state")
+  publishedAt   DateTime?     @map("published_at") @db.Timestamptz(6)
+  publishedBy   String?       @map("published_by") @db.Uuid
+
+  lockState    LockState @default(unlocked) @map("lock_state")
+  lockedAt     DateTime? @map("locked_at") @db.Timestamptz(6)
+  lockedBy     String?   @map("locked_by") @db.Uuid
+  unlockReason String?   @map("unlock_reason")
+  unlockedAt   DateTime? @map("unlocked_at") @db.Timestamptz(6)
+  unlockedBy   String?   @map("unlocked_by") @db.Uuid
+
+  structureRepresentation Json @map("structure_representation") @db.JsonB
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  playoff            Playoff  @relation("PlayoffBrackets", fields: [playoffId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  officialForPlayoff Playoff? @relation("PlayoffOfficialBracket")
+  matches            Match[]  @relation("BracketMatches")
+
+  @@unique([playoffId, versionNumber], map: "uq_brackets_playoff_number")
+  @@index([playoffId], map: "idx_brackets_playoff")
+  @@map("brackets")
+}
+
+model Champion {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  playoffId     String @unique(map: "uq_champions_playoff") @map("playoff_id") @db.Uuid
+  categoryId    String @map("category_id") @db.Uuid
+  winningTeamId String @map("winning_team_id") @db.Uuid
+
+  declarationStatus DeclarationStatus @default(declared) @map("declaration_status")
+  declaredAt        DateTime          @default(now()) @map("declared_at") @db.Timestamptz(6)
+  declaredBy        String?           @map("declared_by") @db.Uuid
+
+  playoff     Playoff  @relation("PlayoffChampion", fields: [playoffId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  category    Category @relation("ChampionCategory", fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  winningTeam Team     @relation("ChampionTeam", fields: [winningTeamId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("champions")
 }
