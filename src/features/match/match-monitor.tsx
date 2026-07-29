@@ -12,6 +12,7 @@ import { StatusBadge } from '@/features/tournament/status-badge';
 import {
   listMatches,
   startMatch,
+  verifyMatch,
   warmUpMatch,
   type MatchItem,
   type MatchStatus,
@@ -84,17 +85,24 @@ function statusLabel(status: MatchStatus) {
 
 function MatchCard({
   match,
+  tournamentId,
+  categoryId,
   busy,
   onWarmUp,
   onStart,
+  onVerify,
 }: {
   match: MatchItem;
+  tournamentId: string;
+  categoryId: string;
   busy: boolean;
   onWarmUp: () => void;
   onStart: () => void;
+  onVerify: () => void;
 }) {
   const score = scoreLabel(match);
   const referees = match.refereeAssignments;
+  const deskHref = `/tournaments/${tournamentId}/categories/${categoryId}/matches/${match.id}`;
 
   return (
     <article
@@ -126,9 +134,7 @@ function MatchCard({
       <dl className="mt-4 grid gap-2 text-sm">
         <div className="flex justify-between gap-3">
           <dt className="text-muted-foreground">Score</dt>
-          <dd className="font-medium tabular-nums">
-            {score ?? (match.status === 'waiting' || match.status === 'warm_up' ? '—' : '—')}
-          </dd>
+          <dd className="font-medium tabular-nums">{score ?? '—'}</dd>
         </div>
         <div className="flex justify-between gap-3">
           <dt className="text-muted-foreground">Referee</dt>
@@ -151,9 +157,21 @@ function MatchCard({
             Start
           </Button>
         ) : null}
-        {match.status === 'live' ? (
-          <Button size="sm" variant="outline" disabled>
-            Scoring in Slice #5
+        {match.status === 'live' ||
+        match.status === 'finished' ||
+        match.status === 'verified' ? (
+          <Button asChild size="sm" variant={match.status === 'live' ? 'default' : 'outline'}>
+            <Link href={deskHref}>Open Match</Link>
+          </Button>
+        ) : null}
+        {match.status === 'finished' ? (
+          <Button size="sm" onClick={onVerify} disabled={busy}>
+            Verify
+          </Button>
+        ) : null}
+        {match.status === 'waiting' || match.status === 'warm_up' ? (
+          <Button asChild size="sm" variant="outline">
+            <Link href={deskHref}>Open desk</Link>
           </Button>
         ) : null}
       </div>
@@ -258,6 +276,23 @@ export function MatchMonitor({
     onSettled: () => setBusyMatchId(null),
   });
 
+  const verifyMutation = useMutation({
+    mutationFn: (matchId: string) =>
+      verifyMatch(tournamentId, categoryId, matchId),
+    onMutate: (matchId) => setBusyMatchId(matchId),
+    onSuccess: async () => {
+      setActionError(null);
+      await invalidate();
+      toast.success('Match verified');
+    },
+    onError: (error) => {
+      const message = getErrorMessage(error);
+      setActionError(message);
+      toast.error(message);
+    },
+    onSettled: () => setBusyMatchId(null),
+  });
+
   const tournament = tournamentQuery.data;
   const schedule = scheduleQuery.data;
   const liveReady =
@@ -319,7 +354,7 @@ export function MatchMonitor({
           {tournament.status === 'live' ? <Badge>Live Ops</Badge> : null}
         </div>
         <p className="mt-1 text-muted-foreground">
-          Go Live, then warm-up and start matches. Scoring stays in Slice #5.
+          Go Live, warm-up/start matches, then open the match desk to score.
         </p>
       </div>
 
@@ -445,9 +480,12 @@ export function MatchMonitor({
               <MatchCard
                 key={match.id}
                 match={match}
+                tournamentId={tournamentId}
+                categoryId={categoryId}
                 busy={busyMatchId === match.id}
                 onWarmUp={() => warmUpMutation.mutate(match.id)}
                 onStart={() => startMutation.mutate(match.id)}
+                onVerify={() => verifyMutation.mutate(match.id)}
               />
             ))}
           </div>

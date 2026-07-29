@@ -15,14 +15,29 @@ export type MatchParticipation = {
 };
 
 export type MatchScoreState = {
+  engineVersion?: string;
+  configSnapshot?: {
+    templateId: string;
+    gamesTo: number;
+    mustWinBy: number;
+    deuceMode: string;
+  };
   sets?: Array<{
     gamesA: number;
     gamesB: number;
+    tieBreak: { pointsA: number; pointsB: number } | null;
+    game: {
+      pointsA: number;
+      pointsB: number;
+      advantageSide: string | null;
+    } | null;
     winnerSide?: string | null;
+    isMatchTieBreak?: boolean;
   }>;
   setsWon?: { A: number; B: number };
-  phase?: string;
-  winnerSide?: string | null;
+  phase?: 'in_progress' | 'completed';
+  winnerSide?: 'A' | 'B' | null;
+  serverSide?: 'A' | 'B' | null;
 };
 
 export type MatchItem = {
@@ -98,5 +113,40 @@ export function startMatch(
   return api<MatchItem>(
     'post',
     `${base(tournamentId, categoryId)}/${matchId}/start`,
+  );
+}
+
+export function scorePoint(
+  tournamentId: string,
+  categoryId: string,
+  matchId: string,
+  side: 'A' | 'B',
+) {
+  return api<MatchItem>(
+    'post',
+    `${base(tournamentId, categoryId)}/${matchId}/score/point`,
+    { body: { side } },
+  );
+}
+
+export function finishMatch(
+  tournamentId: string,
+  categoryId: string,
+  matchId: string,
+) {
+  return api<MatchItem>(
+    'post',
+    `${base(tournamentId, categoryId)}/${matchId}/finish`,
+  );
+}
+
+export function verifyMatch(
+  tournamentId: string,
+  categoryId: string,
+  matchId: string,
+) {
+  return api<MatchItem>(
+    'post',
+    `${base(tournamentId, categoryId)}/${matchId}/verify`,
   );
 }

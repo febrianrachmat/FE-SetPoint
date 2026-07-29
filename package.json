@@ -10,7 +10,8 @@
     "dod:slice1": "npx tsx scripts/dod-slice1.ts",
     "dod:drawing": "npx tsx scripts/dod-drawing.ts",
     "dod:schedule": "npx tsx scripts/dod-schedule.ts",
-    "dod:match-monitor": "npx tsx scripts/dod-match-monitor.ts"
+    "dod:match-monitor": "npx tsx scripts/dod-match-monitor.ts",
+    "dod:scoring": "npx tsx scripts/dod-scoring.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",

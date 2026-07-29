@@ -179,7 +179,8 @@ export function CategoryDetail({
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Publish the tournament first. Scoring arrives in Slice #5.
+                Publish the tournament first. Open Match desk to score, finish,
+                and Admin-verify.
               </p>
             </CardContent>
           </Card>
