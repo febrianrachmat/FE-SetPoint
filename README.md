@@ -70,41 +70,9 @@ Do not start Drawing until this checklist is green.
 
 ## Development status
 
-**Phase:** Organizer Vertical Slice #1–#8 ✅ (Champion completes Organizer MVP)
+**Phase:** Organizer MVP (Slice 1–8) ✅ · Referee desk (assign + score, Verify hidden)
 
-Next after Organizer MVP: Referee app → Realtime → Public API → Spectator.
-
-### Slice #4 DoD
-
-```bash
-npm run dod:match-monitor
-```
-
-Checks Live Ready → Publish → Go Live → match list → Warm-up → Start → refresh.
-
-### Slice #5 DoD
-
-```bash
-npm run dod:scoring
-```
-
-Checks Warm-up → Start → score to completed → Finish → referee verify blocked → Admin Verify.
-
-### Slice #6 DoD
-
-```bash
-npm run dod:standing
-```
-
-Checks verified match → standing table → recalculate → qualified intake → refresh.
-
-### Slice #7 DoD
-
-```bash
-npm run dod:playoff
-```
-
-Checks qualified → generate → review → publish → lock → Open SF Match → generate disabled → refresh.
+Next: Realtime → Public API → Spectator.
 
 ### Slice #8 DoD
 
@@ -113,6 +81,14 @@ npm run dod:champion
 ```
 
 Checks Final verified → Champion declared on screen → refresh.
+
+### Referee DoD
+
+```bash
+npm run dod:referee
+```
+
+Checks referee home → assigned desk → score/finish → Verify hidden → API 403.
 
 ## License
 

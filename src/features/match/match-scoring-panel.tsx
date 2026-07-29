@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/features/auth/auth-context';
+import { isAdminUser } from '@/features/auth/roles';
 import {
   finishMatch,
   getMatch,
@@ -17,6 +19,7 @@ import {
   type MatchItem,
   type MatchScoreState,
 } from '@/lib/api/matches';
+import { assignReferee } from '@/lib/api/referee';
 import { getErrorMessage } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 
@@ -57,15 +60,33 @@ function statusLabel(status: string) {
   return status.replace('_', ' ');
 }
 
+const DEMO_REFEREE_EMAIL = 'referee@setpoint.local';
+
 export function MatchScoringPanel({
   tournamentId,
   categoryId,
   matchId,
+  backHref,
+  backLabel = 'Match Monitor',
+  allowVerify,
+  allowAssign,
 }: {
   tournamentId: string;
   categoryId: string;
   matchId: string;
+  backHref?: string;
+  backLabel?: string;
+  allowVerify?: boolean;
+  allowAssign?: boolean;
 }) {
+  const { user } = useAuth();
+  const admin = isAdminUser(user);
+  const canVerify = allowVerify ?? admin;
+  const canAssign = allowAssign ?? admin;
+  const monitorHref =
+    backHref ??
+    `/tournaments/${tournamentId}/categories/${categoryId}/matches`;
+
   const queryClient = useQueryClient();
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -86,6 +107,7 @@ export function MatchScoringPanel({
       queryClient.invalidateQueries({
         queryKey: ['matches', tournamentId, categoryId],
       }),
+      queryClient.invalidateQueries({ queryKey: ['referee-assignments'] }),
     ]);
   };
 
@@ -130,6 +152,21 @@ export function MatchScoringPanel({
     },
   });
 
+  const assignMutation = useMutation({
+    mutationFn: () =>
+      assignReferee(tournamentId, categoryId, matchId, DEMO_REFEREE_EMAIL),
+    onSuccess: async () => {
+      setActionError(null);
+      await invalidate();
+      toast.success(`Assigned ${DEMO_REFEREE_EMAIL}`);
+    },
+    onError: (error) => {
+      const message = getErrorMessage(error);
+      setActionError(message);
+      toast.error(message);
+    },
+  });
+
   if (matchQuery.isLoading) {
     return <p className="text-sm text-muted-foreground">Loading match…</p>;
   }
@@ -146,20 +183,18 @@ export function MatchScoringPanel({
   const match = matchQuery.data;
   const score = match.scoreRepresentation;
   const completed = score?.phase === 'completed';
-  const busy = runAction.isPending;
+  const busy = runAction.isPending || assignMutation.isPending;
   const nameA = sideName(match, 'A');
   const nameB = sideName(match, 'B');
   const points = pointsLine(score);
+  const assignedCount = match.refereeAssignments?.length ?? 0;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">
-          <Link
-            href={`/tournaments/${tournamentId}/categories/${categoryId}/matches`}
-            className="hover:underline"
-          >
-            Match Monitor
+          <Link href={monitorHref} className="hover:underline">
+            {backLabel}
           </Link>
           {' / '}
           Scoring
@@ -183,6 +218,7 @@ export function MatchScoringPanel({
             ? `${match.court.label} · ${match.court.name}`
             : 'No court'}
           {match.group ? ` · ${match.group.name}` : ''}
+          {` · Referee ${assignedCount > 0 ? `${assignedCount} assigned` : 'unassigned'}`}
         </p>
       </div>
 
@@ -231,6 +267,16 @@ export function MatchScoringPanel({
         ) : null}
 
         <div className="mt-6 flex flex-wrap justify-center gap-3">
+          {canAssign && assignedCount === 0 ? (
+            <Button
+              variant="outline"
+              onClick={() => assignMutation.mutate()}
+              disabled={busy}
+            >
+              Assign demo referee
+            </Button>
+          ) : null}
+
           {match.status === 'waiting' ? (
             <Button
               onClick={() => runAction.mutate({ type: 'warm-up' })}
@@ -278,13 +324,19 @@ export function MatchScoringPanel({
             </Button>
           ) : null}
 
-          {match.status === 'finished' ? (
+          {match.status === 'finished' && canVerify ? (
             <Button
               onClick={() => runAction.mutate({ type: 'verify' })}
               disabled={busy}
             >
               Verify (Admin)
             </Button>
+          ) : null}
+
+          {match.status === 'finished' && !canVerify ? (
+            <p className="text-sm text-muted-foreground">
+              Waiting for Admin verify
+            </p>
           ) : null}
 
           {match.status === 'verified' ? (

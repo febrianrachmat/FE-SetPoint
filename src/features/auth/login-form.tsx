@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/features/auth/auth-context';
+import { homePathForUser } from '@/features/auth/roles';
+import { login as loginRequest } from '@/lib/api/auth';
+import { setAccessToken } from '@/lib/api/client';
 import { getErrorMessage } from '@/lib/api/types';
 
 const schema = z.object({
@@ -20,7 +23,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function LoginForm() {
-  const { login } = useAuth();
+  const { refresh } = useAuth();
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -44,8 +47,10 @@ export function LoginForm() {
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
-      await login(values.email, values.password);
-      router.replace('/tournaments');
+      const result = await loginRequest(values.email, values.password);
+      setAccessToken(result.accessToken);
+      await refresh();
+      router.replace(homePathForUser(result.user));
     } catch (error) {
       setFormError(getErrorMessage(error, 'Login failed'));
     }
