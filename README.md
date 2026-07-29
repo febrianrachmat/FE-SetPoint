@@ -70,9 +70,9 @@ Do not start Drawing until this checklist is green.
 
 ## Development status
 
-**Phase:** Organizer Vertical Slice #1 (in progress)
+**Phase:** Organizer Vertical Slice #1 ✅ · Drawing ✅
 
-Next after DoD: Drawing → Schedule → Match monitor → Standing → Playoff → Champion.
+Next: Schedule (generate → review → publish → lock) after Drawing is Schedule Ready.
 
 ## License
 

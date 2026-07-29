@@ -102,5 +102,5 @@ yarn-error.log*
 # vercel
 .vercel
 
-# typescript
-*.tsbuildinfo
+# Playwright DoD artifacts
+scripts/*.png
