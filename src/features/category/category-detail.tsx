@@ -184,6 +184,29 @@ export function CategoryDetail({
               </p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Standings</CardTitle>
+                <CardDescription>
+                  Group tables and qualified intake after matches are verified
+                </CardDescription>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link
+                  href={`/tournaments/${tournamentId}/categories/${categoryId}/standings`}
+                >
+                  Open standings
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Auto-updates on verify; Recalculate available for manual refresh.
+              </p>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
