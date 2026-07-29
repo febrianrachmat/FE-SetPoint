@@ -52,17 +52,19 @@ src/
 
 A feature is done only when it runs **end-to-end against the live backend**, not when the page renders.
 
-Checklist:
+Checklist (verified 2026-07-29 via `npx tsx scripts/dod-slice1.ts`):
 
-- [ ] Login succeeds
-- [ ] Create Tournament from UI
-- [ ] Move tournament to Setup
-- [ ] Create Category
-- [ ] Register Team(s)
-- [ ] Create Court
-- [ ] Refresh keeps correct data
-- [ ] Backend errors (`400` / `404` / `409`) surface via Axios wrapper messages
-- [ ] Logout / expired token returns to login without stale data
+- [x] Login succeeds
+- [x] Create Tournament from UI
+- [x] Move tournament to Setup
+- [x] Create Category
+- [x] Register Team(s)
+- [x] Create Court
+- [x] Refresh keeps correct data
+- [x] Backend errors (`400` / `404` / `409`) surface via Axios wrapper messages
+- [x] Logout / expired token returns to login without stale data
+
+Re-run: `npx tsx scripts/dod-slice1.ts` (BE `:3000`, FE `:3001`).
 
 Do not start Drawing until this checklist is green.
 

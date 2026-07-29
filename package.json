@@ -6,7 +6,8 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dod:slice1": "npx tsx scripts/dod-slice1.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",
@@ -35,6 +36,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "^15.5.9",
+    "playwright": "^1.62.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
