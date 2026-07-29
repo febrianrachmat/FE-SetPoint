@@ -8,7 +8,8 @@
     "start": "next start -p 3001",
     "lint": "eslint",
     "dod:slice1": "npx tsx scripts/dod-slice1.ts",
-    "dod:drawing": "npx tsx scripts/dod-drawing.ts"
+    "dod:drawing": "npx tsx scripts/dod-drawing.ts",
+    "dod:schedule": "npx tsx scripts/dod-schedule.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",

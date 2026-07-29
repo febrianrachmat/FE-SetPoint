@@ -70,9 +70,9 @@ Do not start Drawing until this checklist is green.
 
 ## Development status
 
-**Phase:** Organizer Vertical Slice #1 ✅ · Drawing ✅
+**Phase:** Organizer Vertical Slice #1 ✅ · Drawing ✅ · Schedule ✅
 
-Next: Schedule (generate → review → publish → lock) after Drawing is Schedule Ready.
+Next: Match monitor / scoring after Schedule is Live Ready (and tournament go-live).
 
 ## License
 

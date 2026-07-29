@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -23,6 +23,11 @@ export function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   const {
     register,
@@ -47,7 +52,16 @@ export function LoginForm() {
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
+    <form
+      method="post"
+      action="#"
+      data-hydrated={hydrated ? 'true' : 'false'}
+      onSubmit={(event) => {
+        event.preventDefault();
+        void onSubmit(event);
+      }}
+      className="space-y-5"
+    >
       {formError ? (
         <Alert variant="destructive">
           <AlertTitle>Could not sign in</AlertTitle>

@@ -106,34 +106,60 @@ export function CategoryDetail({
         <Alert>
           <AlertTitle>Cup category</AlertTitle>
           <AlertDescription>
-            Drawing is not used for knockout_only — generate Playoff directly when
-            that screen exists.
+            Drawing and Schedule are not used for knockout_only — generate Playoff
+            directly when that screen exists.
           </AlertDescription>
         </Alert>
       ) : (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <div>
-              <CardTitle>Drawing</CardTitle>
-              <CardDescription>
-                Partition eligible teams into groups, then publish and lock
-              </CardDescription>
-            </div>
-            <Button asChild size="sm">
-              <Link
-                href={`/tournaments/${tournamentId}/categories/${categoryId}/drawing`}
-              >
-                Open drawing
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Need enough eligible teams for the category partition (e.g. 2 groups
-              × 4 teams = 8) before generate succeeds.
-            </p>
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Drawing</CardTitle>
+                <CardDescription>
+                  Partition eligible teams into groups, then publish and lock
+                </CardDescription>
+              </div>
+              <Button asChild size="sm">
+                <Link
+                  href={`/tournaments/${tournamentId}/categories/${categoryId}/drawing`}
+                >
+                  Open drawing
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Need enough eligible teams for the category partition (e.g. 2 groups
+                × 4 teams = 8) before generate succeeds.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Schedule</CardTitle>
+                <CardDescription>
+                  Assign courts and times after Drawing is Schedule Ready
+                </CardDescription>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link
+                  href={`/tournaments/${tournamentId}/categories/${categoryId}/schedule`}
+                >
+                  Open schedule
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Requires Drawing published ∧ locked and at least one available
+                court.
+              </p>
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );
