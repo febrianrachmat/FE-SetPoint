@@ -159,6 +159,30 @@ export function CategoryDetail({
               </p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Match Monitor</CardTitle>
+                <CardDescription>
+                  Go Live after Schedule is Live Ready, then warm-up and start
+                  matches
+                </CardDescription>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link
+                  href={`/tournaments/${tournamentId}/categories/${categoryId}/matches`}
+                >
+                  Open monitor
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Publish the tournament first. Scoring arrives in Slice #5.
+              </p>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

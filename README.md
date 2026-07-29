@@ -70,9 +70,17 @@ Do not start Drawing until this checklist is green.
 
 ## Development status
 
-**Phase:** Organizer Vertical Slice #1 ✅ · Drawing ✅ · Schedule ✅
+**Phase:** Organizer Vertical Slice #1 ✅ · Drawing ✅ · Schedule ✅ · Match Monitor / Go Live (Slice #4)
 
-Next: Match monitor / scoring after Schedule is Live Ready (and tournament go-live).
+Next: Vertical Slice #5 — Referee Scoring (point → finish → Admin verify).
+
+### Slice #4 DoD
+
+```bash
+npm run dod:match-monitor
+```
+
+Checks Live Ready → Publish → Go Live → match list → Warm-up → Start → refresh.
 
 ## License
 

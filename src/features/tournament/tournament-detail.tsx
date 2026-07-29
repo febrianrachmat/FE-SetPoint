@@ -19,6 +19,7 @@ import { getErrorMessage } from '@/lib/api/types';
 import {
   getTournament,
   moveTournamentToSetup,
+  publishTournament,
 } from '@/lib/api/tournaments';
 
 export function TournamentDetail({ tournamentId }: { tournamentId: string }) {
@@ -53,6 +54,18 @@ export function TournamentDetail({ tournamentId }: { tournamentId: string }) {
     },
   });
 
+  const publishMutation = useMutation({
+    mutationFn: () => publishTournament(tournamentId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['tournament', tournamentId] });
+      await queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      toast.success('Tournament published');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+
   if (tournamentQuery.isLoading) {
     return <p className="text-sm text-muted-foreground">Loading tournament…</p>;
   }
@@ -71,6 +84,8 @@ export function TournamentDetail({ tournamentId }: { tournamentId: string }) {
   const tournament = tournamentQuery.data;
   const categories = categoriesQuery.data?.items ?? [];
   const courts = courtsQuery.data?.items ?? [];
+  const canPublish =
+    tournament.status === 'setup' && categories.length >= 1;
 
   return (
     <div className="space-y-8">
@@ -84,14 +99,29 @@ export function TournamentDetail({ tournamentId }: { tournamentId: string }) {
             {tournament.description || 'No description'}
           </p>
         </div>
-        {tournament.status === 'draft' ? (
-          <Button
-            onClick={() => setupMutation.mutate()}
-            disabled={setupMutation.isPending}
-          >
-            {setupMutation.isPending ? 'Moving…' : 'Move to Setup'}
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          {tournament.status === 'draft' ? (
+            <Button
+              onClick={() => setupMutation.mutate()}
+              disabled={setupMutation.isPending}
+            >
+              {setupMutation.isPending ? 'Moving…' : 'Move to Setup'}
+            </Button>
+          ) : null}
+          {tournament.status === 'setup' ? (
+            <Button
+              onClick={() => publishMutation.mutate()}
+              disabled={!canPublish || publishMutation.isPending}
+            >
+              {publishMutation.isPending ? 'Publishing…' : 'Publish tournament'}
+            </Button>
+          ) : null}
+          {tournament.status === 'published' ? (
+            <p className="self-center text-sm text-muted-foreground">
+              Go Live from Match Monitor after Schedule is Live Ready.
+            </p>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

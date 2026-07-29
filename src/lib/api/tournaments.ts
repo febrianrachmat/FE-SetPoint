@@ -50,3 +50,11 @@ export function createTournament(body: {
 export function moveTournamentToSetup(id: string) {
   return api<Tournament>('post', `/tournaments/${id}/setup`);
 }
+
+export function publishTournament(id: string) {
+  return api<Tournament>('post', `/tournaments/${id}/publish`);
+}
+
+export function goLiveTournament(id: string) {
+  return api<Tournament>('post', `/tournaments/${id}/go-live`);
+}
