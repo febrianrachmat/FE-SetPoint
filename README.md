@@ -1,44 +1,76 @@
 # Set Point — Frontend (FE-SetPoint)
 
-Frontend repository for the **Set Point** padel tournament platform.
+Organizer dashboard for the **Set Point** padel tournament platform.
 
-**Set Point** is a production-grade SaaS platform that helps Event Organizers manage padel tournaments from preparation to champion declaration through intelligent automation while keeping humans fully in control.
+Companion backend: [BE-SetPoint](https://github.com/febrianrachmat/BE-SetPoint)  
+API contract: `BE/docs/22-api-consumption-guide.md`
 
-## Vision
+## Stack
 
-To become the trusted operating system for padel tournament management—where Event Organizers can run professional competitions with confidence, speed, and full control.
+- Next.js 15 (App Router) + TypeScript
+- Tailwind CSS v4 + shadcn/ui
+- TanStack Query
+- React Hook Form + Zod
+- Axios (envelope unwrap + `ApiError`)
+- Lucide icons
 
-## Repository Role
+Single app at repo root (not a monorepo yet). Features grow with the organizer flow — no empty Drawing/Playoff folders until those screens exist.
 
-This repository (`FE-SetPoint`) owns client applications and organizer-facing experiences.
+## Quick start
 
-Companion repository:
+```bash
+# Backend on :3000 (seeded)
+cd ../BE && npm run start:dev
 
-- Backend: [BE-SetPoint](https://github.com/febrianrachmat/BE-SetPoint)
-
-Architecture documentation and Prisma schema live in the backend repository, not here.
-
-## Repository Structure
-
-```text
-FE-SetPoint/
-├── .github/                 # GitHub workflows and automation config
-├── .editorconfig
-├── .gitignore
-├── LICENSE
-└── README.md
+# Frontend on :3001
+cp .env.example .env.local
+npm install
+npm run dev
 ```
 
-Next.js application structure (`app/`, `components/`, `public/`, etc.) will be introduced when frontend scaffolding begins.
+Open http://localhost:3001/login  
+Demo: `admin@setpoint.local` / `Password123!`
 
-## Development Status
+## Structure
 
-**Phase: Foundation Phase**
+```text
+src/
+  app/
+    login/
+    (organizer)/tournaments/...
+  components/ui/          # shadcn
+  features/
+    auth/
+    tournament/
+    category/
+    team/
+    court/
+  lib/api/                # Axios client + domain API helpers
+```
 
-Current focus:
+## Definition of Done — Vertical Slice #1
 
-- Repository hygiene for frontend-only ownership
-- Next.js application scaffold pending
+A feature is done only when it runs **end-to-end against the live backend**, not when the page renders.
+
+Checklist:
+
+- [ ] Login succeeds
+- [ ] Create Tournament from UI
+- [ ] Move tournament to Setup
+- [ ] Create Category
+- [ ] Register Team(s)
+- [ ] Create Court
+- [ ] Refresh keeps correct data
+- [ ] Backend errors (`400` / `404` / `409`) surface via Axios wrapper messages
+- [ ] Logout / expired token returns to login without stale data
+
+Do not start Drawing until this checklist is green.
+
+## Development status
+
+**Phase:** Organizer Vertical Slice #1 (in progress)
+
+Next after DoD: Drawing → Schedule → Match monitor → Standing → Playoff → Champion.
 
 ## License
 
