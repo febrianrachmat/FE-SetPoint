@@ -13,7 +13,8 @@
     "dod:match-monitor": "npx tsx scripts/dod-match-monitor.ts",
     "dod:scoring": "npx tsx scripts/dod-scoring.ts",
     "dod:standing": "npx tsx scripts/dod-standing.ts",
-    "dod:playoff": "npx tsx scripts/dod-playoff.ts"
+    "dod:playoff": "npx tsx scripts/dod-playoff.ts",
+    "dod:champion": "npx tsx scripts/dod-champion.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",

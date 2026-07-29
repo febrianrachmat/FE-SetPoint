@@ -70,9 +70,9 @@ Do not start Drawing until this checklist is green.
 
 ## Development status
 
-**Phase:** Organizer Vertical Slice #1 ✅ · Drawing ✅ · Schedule ✅ · Match Monitor / Go Live ✅ · Scoring / Verify ✅ · Standings ✅ · Playoff (Slice #7)
+**Phase:** Organizer Vertical Slice #1–#8 ✅ (Champion completes Organizer MVP)
 
-Next: Vertical Slice #8 — Champion.
+Next after Organizer MVP: Referee app → Realtime → Public API → Spectator.
 
 ### Slice #4 DoD
 
@@ -105,6 +105,14 @@ npm run dod:playoff
 ```
 
 Checks qualified → generate → review → publish → lock → Open SF Match → generate disabled → refresh.
+
+### Slice #8 DoD
+
+```bash
+npm run dod:champion
+```
+
+Checks Final verified → Champion declared on screen → refresh.
 
 ## License
 

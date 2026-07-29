@@ -134,9 +134,30 @@ export function unlockPlayoff(
   );
 }
 
-export function getChampion(tournamentId: string, categoryId: string) {
-  return api<{
-    teamId: string | null;
-    team?: { id: string; name: string } | null;
-  }>('get', `${base(tournamentId, categoryId)}/champion`);
+export type Champion = {
+  id: string;
+  playoffId: string;
+  categoryId: string;
+  winningTeamId: string;
+  declarationStatus: string;
+  declaredAt: string;
+  declaredBy: string | null;
+  winningTeam: { id: string; name: string };
+};
+
+export async function getChampion(
+  tournamentId: string,
+  categoryId: string,
+) {
+  try {
+    return await api<Champion>(
+      'get',
+      `${base(tournamentId, categoryId)}/champion`,
+    );
+  } catch (error) {
+    if (isApiError(error) && error.statusCode === 404) {
+      return null;
+    }
+    throw error;
+  }
 }

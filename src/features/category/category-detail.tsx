@@ -230,6 +230,30 @@ export function CategoryDetail({
               </p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Champion</CardTitle>
+                <CardDescription>
+                  Shown after the Final match is verified
+                </CardDescription>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link
+                  href={`/tournaments/${tournamentId}/categories/${categoryId}/champion`}
+                >
+                  Open champion
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Backend declares the winner when Final verification advances the
+                bracket.
+              </p>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

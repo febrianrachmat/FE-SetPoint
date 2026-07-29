@@ -213,6 +213,18 @@ export function PlayoffPanel({
         </div>
       </div>
 
+      {playoffReady ? (
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link
+              href={`/tournaments/${tournamentId}/categories/${categoryId}/champion`}
+            >
+              View Champion
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+
       {actionError ? (
         <Alert variant="destructive">
           <AlertTitle>Action failed</AlertTitle>
