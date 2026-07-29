@@ -207,6 +207,29 @@ export function CategoryDetail({
               </p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Playoff</CardTitle>
+                <CardDescription>
+                  Generate bracket from qualified teams, then publish and lock
+                </CardDescription>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link
+                  href={`/tournaments/${tournamentId}/categories/${categoryId}/playoff`}
+                >
+                  Open playoff
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Requires enough qualified standings (e.g. 2 groups × top 2).
+              </p>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
