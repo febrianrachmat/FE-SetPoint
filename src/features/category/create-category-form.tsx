@@ -13,10 +13,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createCategory } from '@/lib/api/categories';
 import { getErrorMessage } from '@/lib/api/types';
+import { cn } from '@/lib/utils';
 
 const schema = z.object({
   name: z.string().min(2, 'Name is required'),
-  format: z.string().min(2, 'Format is required'),
   competitionMode: z.enum(['group_then_knockout', 'knockout_only']),
   teamSize: z.string().min(1),
   groupCount: z.string().min(1),
@@ -34,6 +34,23 @@ function toPositiveInt(value: string, label: string) {
   return parsed;
 }
 
+function deriveFormat(
+  teamSize: number,
+  competitionMode: FormValues['competitionMode'],
+) {
+  const sizeLabel =
+    teamSize === 1 ? 'singles' : teamSize === 2 ? 'doubles' : `teams${teamSize}`;
+  return competitionMode === 'knockout_only'
+    ? `${sizeLabel}_cup`
+    : `${sizeLabel}_group_playoff`;
+}
+
+const selectClassName = cn(
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none',
+  'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
+  'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+);
+
 export function CreateCategoryForm({ tournamentId }: { tournamentId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -43,7 +60,6 @@ export function CreateCategoryForm({ tournamentId }: { tournamentId: string }) {
     resolver: zodResolver(schema),
     defaultValues: {
       name: 'Open Doubles',
-      format: 'doubles_group_playoff',
       competitionMode: 'group_then_knockout',
       teamSize: '2',
       groupCount: '2',
@@ -52,24 +68,41 @@ export function CreateCategoryForm({ tournamentId }: { tournamentId: string }) {
     },
   });
 
+  const competitionMode = form.watch('competitionMode');
+  const isGroupMode = competitionMode === 'group_then_knockout';
+
   const mutation = useMutation({
-    mutationFn: (values: FormValues) =>
-      createCategory(tournamentId, {
-        name: values.name,
-        format: values.format,
-        configuration: {
-          competitionMode: values.competitionMode,
-          teamSize: toPositiveInt(values.teamSize, 'Team size'),
-          groupCount: toPositiveInt(values.groupCount, 'Groups'),
-          teamsPerGroup: toPositiveInt(values.teamsPerGroup, 'Teams per group'),
-          scoring: { templateId: 'one_set_4_gp_tb3' },
-          standings: {
-            pointsForWin: 1,
-            pointsForLoss: 0,
-            qualifyTop: toPositiveInt(values.qualifyTop, 'Qualify top'),
-          },
+    mutationFn: (values: FormValues) => {
+      const teamSize = toPositiveInt(values.teamSize, 'Team size');
+      const configuration: Record<string, unknown> = {
+        competitionMode: values.competitionMode,
+        teamSize,
+        scoring: { templateId: 'one_set_4_gp_tb3' },
+        standings: {
+          pointsForWin: 1,
+          pointsForLoss: 0,
+          ...(values.competitionMode === 'group_then_knockout'
+            ? {
+                qualifyTop: toPositiveInt(values.qualifyTop, 'Qualify top'),
+              }
+            : {}),
         },
-      }),
+      };
+
+      if (values.competitionMode === 'group_then_knockout') {
+        configuration.groupCount = toPositiveInt(values.groupCount, 'Groups');
+        configuration.teamsPerGroup = toPositiveInt(
+          values.teamsPerGroup,
+          'Teams per group',
+        );
+      }
+
+      return createCategory(tournamentId, {
+        name: values.name,
+        format: deriveFormat(teamSize, values.competitionMode),
+        configuration,
+      });
+    },
     onSuccess: async (category) => {
       await queryClient.invalidateQueries({ queryKey: ['categories', tournamentId] });
       toast.success('Category created');
@@ -99,29 +132,40 @@ export function CreateCategoryForm({ tournamentId }: { tournamentId: string }) {
           <Input id="name" {...form.register('name')} />
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="format">Format</Label>
-          <Input id="format" {...form.register('format')} />
+          <Label htmlFor="competitionMode">Format</Label>
+          <select
+            id="competitionMode"
+            className={selectClassName}
+            {...form.register('competitionMode')}
+          >
+            <option value="group_then_knockout">Group</option>
+            <option value="knockout_only">Knockout</option>
+          </select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="teamSize">Team size</Label>
           <Input id="teamSize" type="number" {...form.register('teamSize')} />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="groupCount">Groups</Label>
-          <Input id="groupCount" type="number" {...form.register('groupCount')} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="teamsPerGroup">Teams per group</Label>
-          <Input
-            id="teamsPerGroup"
-            type="number"
-            {...form.register('teamsPerGroup')}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="qualifyTop">Qualify top N</Label>
-          <Input id="qualifyTop" type="number" {...form.register('qualifyTop')} />
-        </div>
+        {isGroupMode ? (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="groupCount">Groups</Label>
+              <Input id="groupCount" type="number" {...form.register('groupCount')} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="teamsPerGroup">Teams per group</Label>
+              <Input
+                id="teamsPerGroup"
+                type="number"
+                {...form.register('teamsPerGroup')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="qualifyTop">Qualify top N</Label>
+              <Input id="qualifyTop" type="number" {...form.register('qualifyTop')} />
+            </div>
+          </>
+        ) : null}
       </div>
 
       <Button type="submit" disabled={mutation.isPending}>

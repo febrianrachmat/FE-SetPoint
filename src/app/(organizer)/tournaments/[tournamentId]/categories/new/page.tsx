@@ -27,7 +27,7 @@ export default async function NewCategoryPage({
         <CardHeader>
           <CardTitle>Create category</CardTitle>
           <CardDescription>
-            Default: group then knockout with scoring template one_set_4_gp_tb3
+            Choose group or knockout. Scoring template: one_set_4_gp_tb3
           </CardDescription>
         </CardHeader>
         <CardContent>
