@@ -102,10 +102,18 @@ export function getScheduleVersion(
   );
 }
 
+export type ScheduleStrategy = 'group_block' | 'round_wave';
+
 export function generateSchedule(
   tournamentId: string,
   categoryId: string,
-  body?: { startAt?: string; matchDurationMinutes?: number },
+  body?: {
+    startAt?: string;
+    matchDurationMinutes?: number;
+    restBufferMinutes?: number;
+    strategy?: ScheduleStrategy;
+    courtIds?: string[];
+  },
 ) {
   return api<ScheduleVersionDetail>(
     'post',

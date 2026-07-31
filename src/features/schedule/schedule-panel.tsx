@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { listCourts } from '@/lib/api/courts';
 import {
   generateSchedule,
   getSchedule,
@@ -27,9 +28,16 @@ import {
   unlockSchedule,
   updateScheduleEntry,
   type ScheduleEntry,
+  type ScheduleStrategy,
 } from '@/lib/api/schedule';
 import { getErrorMessage } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
+
+const selectClassName = cn(
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none',
+  'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
+  'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+);
 
 function pad2(value: number) {
   return String(value).padStart(2, '0');
@@ -237,6 +245,11 @@ export function SchedulePanel({
   const queryClient = useQueryClient();
   const now = useMemo(() => new Date(), []);
   const [matchDurationMinutes, setMatchDurationMinutes] = useState('90');
+  const [restBufferMinutes, setRestBufferMinutes] = useState('0');
+  const [strategy, setStrategy] = useState<ScheduleStrategy>('group_block');
+  const [selectedCourtIds, setSelectedCourtIds] = useState<string[] | null>(
+    null,
+  );
   const [startDate, setStartDate] = useState(toDateInputValue(now));
   const [firstMatchStartTime, setFirstMatchStartTime] = useState(
     toTimeInputValue(now),
@@ -249,6 +262,24 @@ export function SchedulePanel({
     queryKey: ['schedule', tournamentId, categoryId],
     queryFn: () => getSchedule(tournamentId, categoryId),
   });
+
+  const courtsQuery = useQuery({
+    queryKey: ['courts', tournamentId],
+    queryFn: () => listCourts(tournamentId),
+  });
+
+  const availableCourts = useMemo(
+    () =>
+      (courtsQuery.data?.items ?? []).filter(
+        (court) => court.status === 'available',
+      ),
+    [courtsQuery.data?.items],
+  );
+
+  const effectiveCourtIds = useMemo(() => {
+    if (selectedCourtIds) return selectedCourtIds;
+    return availableCourts.map((court) => court.id);
+  }, [availableCourts, selectedCourtIds]);
 
   const versionsQuery = useQuery({
     queryKey: ['schedule-versions', tournamentId, categoryId],
@@ -284,14 +315,22 @@ export function SchedulePanel({
   const generateMutation = useMutation({
     mutationFn: () => {
       const minutes = Number(matchDurationMinutes);
+      const buffer = Number(restBufferMinutes);
       const startAt = combineLocalDateAndTime(startDate, firstMatchStartTime);
       if (!startAt) {
         throw new Error('Start date and first match start time are required');
+      }
+      if (effectiveCourtIds.length < 1) {
+        throw new Error('Select at least one available court for this category');
       }
       return generateSchedule(tournamentId, categoryId, {
         startAt,
         matchDurationMinutes:
           Number.isFinite(minutes) && minutes >= 15 ? minutes : 90,
+        restBufferMinutes:
+          Number.isFinite(buffer) && buffer >= 0 ? buffer : 0,
+        strategy,
+        courtIds: effectiveCourtIds,
       });
     },
     onSuccess: async (version) => {
@@ -464,10 +503,30 @@ export function SchedulePanel({
             <CardHeader>
               <CardTitle>Generate</CardTitle>
               <CardDescription>
-                Set when the first match starts, then generate slots onto courts.
+                Group-block keeps one group on one court until finished. Pick a
+                court pool to batch this category beside others.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="strategy">Strategy</Label>
+                <select
+                  id="strategy"
+                  className={selectClassName}
+                  value={strategy}
+                  disabled={locked}
+                  onChange={(event) =>
+                    setStrategy(event.target.value as ScheduleStrategy)
+                  }
+                >
+                  <option value="group_block">
+                    Group-block (1 court finishes 1 group)
+                  </option>
+                  <option value="round_wave">
+                    Round-wave (all groups advance together)
+                  </option>
+                </select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="startDate">Start date</Label>
                 <Input
@@ -500,9 +559,83 @@ export function SchedulePanel({
                   disabled={locked}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="restBufferMinutes">Rest buffer (min)</Label>
+                <Input
+                  id="restBufferMinutes"
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={restBufferMinutes}
+                  onChange={(event) => setRestBufferMinutes(event.target.value)}
+                  disabled={locked}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Gap after each match before the same court continues.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label>Court pool</Label>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                    disabled={locked || availableCourts.length === 0}
+                    onClick={() =>
+                      setSelectedCourtIds(availableCourts.map((court) => court.id))
+                    }
+                  >
+                    Select all
+                  </button>
+                </div>
+                {courtsQuery.isLoading ? (
+                  <p className="text-xs text-muted-foreground">Loading courts…</p>
+                ) : availableCourts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    No available courts. Add courts first.
+                  </p>
+                ) : (
+                  <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-md border px-2 py-2">
+                    {availableCourts.map((court) => {
+                      const checked = effectiveCourtIds.includes(court.id);
+                      return (
+                        <label
+                          key={court.id}
+                          className="flex cursor-pointer items-center gap-2 text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            className="size-3.5 accent-foreground"
+                            checked={checked}
+                            disabled={locked}
+                            onChange={() => {
+                              const current = effectiveCourtIds;
+                              const next = checked
+                                ? current.filter((id) => id !== court.id)
+                                : [...current, court.id];
+                              setSelectedCourtIds(next);
+                            }}
+                          />
+                          <span>
+                            {court.label} — {court.name}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Tip: 4 groups → pick 4 courts. With 8 courts, run 2 categories
+                  in parallel on separate pools.
+                </p>
+              </div>
               <Button
                 className="w-full"
-                disabled={locked || generateMutation.isPending}
+                disabled={
+                  locked ||
+                  generateMutation.isPending ||
+                  effectiveCourtIds.length < 1
+                }
                 onClick={() => {
                   setActionError(null);
                   generateMutation.mutate();
