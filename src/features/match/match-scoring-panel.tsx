@@ -10,10 +10,15 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/auth-context';
 import { isAdminUser } from '@/features/auth/roles';
 import {
+  adjustScoreGame,
+  adjustScoreSet,
   finishMatch,
   getMatch,
+  removeScorePoint,
   scorePoint,
+  setScoreServer,
   startMatch,
+  undoScore,
   verifyMatch,
   warmUpMatch,
   type MatchItem,
@@ -34,25 +39,47 @@ function pointLabel(points: number) {
   return ['0', '15', '30', '40'][points] ?? String(points);
 }
 
-function gamesLine(score: MatchScoreState | null | undefined) {
+function sidePoints(
+  score: MatchScoreState | null | undefined,
+  side: 'A' | 'B',
+): string {
   const current = score?.sets?.at(-1);
   if (!current) return '—';
-  return `${current.gamesA} – ${current.gamesB}`;
-}
-
-function pointsLine(score: MatchScoreState | null | undefined) {
-  const current = score?.sets?.at(-1);
-  if (!current) return null;
   if (current.tieBreak) {
-    return `TB ${current.tieBreak.pointsA} – ${current.tieBreak.pointsB}`;
+    return String(
+      side === 'A' ? current.tieBreak.pointsA : current.tieBreak.pointsB,
+    );
   }
   if (current.game) {
-    const adv = current.game.advantageSide
-      ? ` · Adv ${current.game.advantageSide}`
-      : '';
-    return `${pointLabel(current.game.pointsA)} – ${pointLabel(current.game.pointsB)}${adv}`;
+    const points = side === 'A' ? current.game.pointsA : current.game.pointsB;
+    const opponent =
+      side === 'A' ? current.game.pointsB : current.game.pointsA;
+    if (
+      current.game.advantageSide &&
+      points >= 3 &&
+      opponent >= 3
+    ) {
+      return current.game.advantageSide === side ? 'AD' : '40';
+    }
+    return pointLabel(points);
   }
-  return null;
+  return '—';
+}
+
+function sideGames(
+  score: MatchScoreState | null | undefined,
+  side: 'A' | 'B',
+) {
+  const current = score?.sets?.at(-1);
+  if (!current) return 0;
+  return side === 'A' ? current.gamesA : current.gamesB;
+}
+
+function sideSets(
+  score: MatchScoreState | null | undefined,
+  side: 'A' | 'B',
+) {
+  return score?.setsWon?.[side] ?? 0;
 }
 
 function statusLabel(status: string) {
@@ -61,6 +88,151 @@ function statusLabel(status: string) {
 }
 
 const DEMO_REFEREE_EMAIL = 'referee@setpoint.local';
+
+type ScoreAction =
+  | { type: 'warm-up' }
+  | { type: 'start' }
+  | { type: 'point'; side: 'A' | 'B' }
+  | { type: 'point-remove'; side: 'A' | 'B' }
+  | { type: 'game'; side: 'A' | 'B'; delta: 1 | -1 }
+  | { type: 'set'; side: 'A' | 'B'; delta: 1 | -1 }
+  | { type: 'server'; side: 'A' | 'B' }
+  | { type: 'undo' }
+  | { type: 'finish' }
+  | { type: 'verify' };
+
+function SideControls({
+  side,
+  name,
+  serving,
+  sets,
+  games,
+  points,
+  disabled,
+  onAction,
+}: {
+  side: 'A' | 'B';
+  name: string;
+  serving: boolean;
+  sets: number;
+  games: number;
+  points: string;
+  disabled: boolean;
+  onAction: (action: ScoreAction) => void;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex min-w-0 flex-col rounded-xl border p-4 transition-colors',
+        serving
+          ? 'border-foreground/25 bg-foreground/[0.03]'
+          : 'border-border bg-background',
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Side {side}
+          </p>
+          <p className="mt-1 truncate font-heading text-lg tracking-tight">
+            {name}
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onAction({ type: 'server', side })}
+          className={cn(
+            'shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium tracking-wide transition-colors',
+            serving
+              ? 'bg-foreground text-background'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80',
+          )}
+          title="Set service"
+        >
+          {serving ? 'Serving' : 'Serve'}
+        </button>
+      </div>
+
+      <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Sets
+          </p>
+          <p className="font-heading text-3xl tabular-nums tracking-tight">
+            {sets}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Games
+          </p>
+          <p className="font-heading text-3xl tabular-nums tracking-tight">
+            {games}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Points
+          </p>
+          <p className="font-heading text-3xl tabular-nums tracking-tight">
+            {points}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant="outline"
+            disabled={disabled}
+            onClick={() => onAction({ type: 'point-remove', side })}
+          >
+            − Point
+          </Button>
+          <Button
+            disabled={disabled}
+            onClick={() => onAction({ type: 'point', side })}
+          >
+            + Point
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant="outline"
+            disabled={disabled}
+            onClick={() => onAction({ type: 'game', side, delta: -1 })}
+          >
+            − Game
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={disabled}
+            onClick={() => onAction({ type: 'game', side, delta: 1 })}
+          >
+            + Game
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant="outline"
+            disabled={disabled}
+            onClick={() => onAction({ type: 'set', side, delta: -1 })}
+          >
+            − Set
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={disabled}
+            onClick={() => onAction({ type: 'set', side, delta: 1 })}
+          >
+            + Set
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function MatchScoringPanel({
   tournamentId,
@@ -112,14 +284,7 @@ export function MatchScoringPanel({
   };
 
   const runAction = useMutation({
-    mutationFn: async (
-      action:
-        | { type: 'warm-up' }
-        | { type: 'start' }
-        | { type: 'point'; side: 'A' | 'B' }
-        | { type: 'finish' }
-        | { type: 'verify' },
-    ) => {
+    mutationFn: async (action: ScoreAction) => {
       switch (action.type) {
         case 'warm-up':
           return warmUpMatch(tournamentId, categoryId, matchId);
@@ -127,6 +292,38 @@ export function MatchScoringPanel({
           return startMatch(tournamentId, categoryId, matchId);
         case 'point':
           return scorePoint(tournamentId, categoryId, matchId, action.side);
+        case 'point-remove':
+          return removeScorePoint(
+            tournamentId,
+            categoryId,
+            matchId,
+            action.side,
+          );
+        case 'game':
+          return adjustScoreGame(
+            tournamentId,
+            categoryId,
+            matchId,
+            action.side,
+            action.delta,
+          );
+        case 'set':
+          return adjustScoreSet(
+            tournamentId,
+            categoryId,
+            matchId,
+            action.side,
+            action.delta,
+          );
+        case 'server':
+          return setScoreServer(
+            tournamentId,
+            categoryId,
+            matchId,
+            action.side,
+          );
+        case 'undo':
+          return undoScore(tournamentId, categoryId, matchId);
         case 'finish':
           return finishMatch(tournamentId, categoryId, matchId);
         case 'verify':
@@ -140,6 +337,11 @@ export function MatchScoringPanel({
         'warm-up': 'Warm-up started',
         start: 'Match started',
         point: 'Point scored',
+        'point-remove': 'Point removed',
+        game: 'Game updated',
+        set: 'Set updated',
+        server: 'Service updated',
+        undo: 'Last action undone',
         finish: 'Match finished',
         verify: 'Match verified',
       };
@@ -186,11 +388,14 @@ export function MatchScoringPanel({
   const busy = runAction.isPending || assignMutation.isPending;
   const nameA = sideName(match, 'A');
   const nameB = sideName(match, 'B');
-  const points = pointsLine(score);
   const assignedCount = match.refereeAssignments?.length ?? 0;
+  const serverSide = score?.serverSide ?? 'A';
+  const canUndo = (score?.undoStack?.length ?? 0) > 0;
+  const inTieBreak = Boolean(score?.sets?.at(-1)?.tieBreak);
+  const liveScoring = match.status === 'live' && !completed;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">
           <Link href={monitorHref} className="hover:underline">
@@ -233,34 +438,77 @@ export function MatchScoringPanel({
         data-match-id={match.id}
         data-match-status={match.status}
         data-score-phase={score?.phase ?? 'none'}
-        className="rounded-lg border border-border bg-card p-6"
+        className="rounded-xl border border-border bg-card p-5 sm:p-6"
       >
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-center">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Side A
-            </p>
-            <p className="mt-1 font-heading text-xl tracking-tight">{nameA}</p>
-          </div>
-          <p className="font-heading text-4xl tabular-nums tracking-tight">
-            {gamesLine(score)}
-          </p>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Side B
-            </p>
-            <p className="mt-1 font-heading text-xl tracking-tight">{nameB}</p>
-          </div>
-        </div>
+        {liveScoring ? (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">
+                {inTieBreak ? 'Tie-break in progress' : 'Current game'}
+                {score?.sets?.length
+                  ? ` · Set ${score.sets.length}`
+                  : ''}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={busy || !canUndo}
+                onClick={() => runAction.mutate({ type: 'undo' })}
+              >
+                Undo last
+              </Button>
+            </div>
 
-        {points ? (
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Points: <span className="font-medium text-foreground">{points}</span>
-          </p>
-        ) : null}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SideControls
+                side="A"
+                name={nameA}
+                serving={serverSide === 'A'}
+                sets={sideSets(score, 'A')}
+                games={sideGames(score, 'A')}
+                points={sidePoints(score, 'A')}
+                disabled={busy}
+                onAction={(action) => runAction.mutate(action)}
+              />
+              <SideControls
+                side="B"
+                name={nameB}
+                serving={serverSide === 'B'}
+                sets={sideSets(score, 'B')}
+                games={sideGames(score, 'B')}
+                points={sidePoints(score, 'B')}
+                disabled={busy}
+                onAction={(action) => runAction.mutate(action)}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-center">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Side A
+              </p>
+              <p className="mt-1 font-heading text-xl tracking-tight">{nameA}</p>
+            </div>
+            <div>
+              <p className="font-heading text-4xl tabular-nums tracking-tight">
+                {sideSets(score, 'A')} – {sideSets(score, 'B')}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Games {sideGames(score, 'A')} – {sideGames(score, 'B')}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Side B
+              </p>
+              <p className="mt-1 font-heading text-xl tracking-tight">{nameB}</p>
+            </div>
+          </div>
+        )}
 
         {completed && score?.winnerSide ? (
-          <p className="mt-3 text-center text-sm font-medium">
+          <p className="mt-5 text-center text-sm font-medium">
             Winner: Side {score.winnerSide} (
             {score.winnerSide === 'A' ? nameA : nameB})
           </p>
@@ -293,26 +541,6 @@ export function MatchScoringPanel({
             >
               Start
             </Button>
-          ) : null}
-
-          {match.status === 'live' && !completed ? (
-            <>
-              <Button
-                size="lg"
-                onClick={() => runAction.mutate({ type: 'point', side: 'A' })}
-                disabled={busy}
-              >
-                +1 {nameA}
-              </Button>
-              <Button
-                size="lg"
-                variant="secondary"
-                onClick={() => runAction.mutate({ type: 'point', side: 'B' })}
-                disabled={busy}
-              >
-                +1 {nameB}
-              </Button>
-            </>
           ) : null}
 
           {match.status === 'live' && completed ? (
@@ -348,7 +576,8 @@ export function MatchScoringPanel({
       </section>
 
       <p className="text-center text-xs text-muted-foreground">
-        Verify is Admin-only (MATCH-10). Referee may score and finish, not verify.
+        Use − Point / Undo for mis-taps. Service badge marks the serving side.
+        Verify is Admin-only (MATCH-10).
       </p>
     </div>
   );

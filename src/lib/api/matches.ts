@@ -21,6 +21,7 @@ export type MatchScoreState = {
     gamesTo: number;
     mustWinBy: number;
     deuceMode: string;
+    matchFormat?: string;
   };
   sets?: Array<{
     gamesA: number;
@@ -38,6 +39,7 @@ export type MatchScoreState = {
   phase?: 'in_progress' | 'completed';
   winnerSide?: 'A' | 'B' | null;
   serverSide?: 'A' | 'B' | null;
+  undoStack?: unknown[];
 };
 
 export type MatchItem = {
@@ -126,6 +128,71 @@ export function scorePoint(
     'post',
     `${base(tournamentId, categoryId)}/${matchId}/score/point`,
     { body: { side } },
+  );
+}
+
+export function removeScorePoint(
+  tournamentId: string,
+  categoryId: string,
+  matchId: string,
+  side: 'A' | 'B',
+) {
+  return api<MatchItem>(
+    'post',
+    `${base(tournamentId, categoryId)}/${matchId}/score/point/remove`,
+    { body: { side } },
+  );
+}
+
+export function adjustScoreGame(
+  tournamentId: string,
+  categoryId: string,
+  matchId: string,
+  side: 'A' | 'B',
+  delta: 1 | -1,
+) {
+  return api<MatchItem>(
+    'post',
+    `${base(tournamentId, categoryId)}/${matchId}/score/game`,
+    { body: { side, delta } },
+  );
+}
+
+export function adjustScoreSet(
+  tournamentId: string,
+  categoryId: string,
+  matchId: string,
+  side: 'A' | 'B',
+  delta: 1 | -1,
+) {
+  return api<MatchItem>(
+    'post',
+    `${base(tournamentId, categoryId)}/${matchId}/score/set`,
+    { body: { side, delta } },
+  );
+}
+
+export function setScoreServer(
+  tournamentId: string,
+  categoryId: string,
+  matchId: string,
+  side: 'A' | 'B',
+) {
+  return api<MatchItem>(
+    'post',
+    `${base(tournamentId, categoryId)}/${matchId}/score/server`,
+    { body: { side } },
+  );
+}
+
+export function undoScore(
+  tournamentId: string,
+  categoryId: string,
+  matchId: string,
+) {
+  return api<MatchItem>(
+    'post',
+    `${base(tournamentId, categoryId)}/${matchId}/score/undo`,
   );
 }
 

@@ -214,7 +214,7 @@ async function main() {
       .locator('section[data-match-status="live"]')
       .waitFor({ state: 'visible' });
 
-    const pointA = page.getByRole('button', { name: /^\+1 / }).first();
+    const pointA = page.getByRole('button', { name: /^\+ Point$/i }).first();
     for (let i = 0; i < 16; i += 1) {
       await pointA.click();
       await page.waitForTimeout(80);

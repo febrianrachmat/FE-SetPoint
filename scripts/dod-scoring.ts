@@ -1,6 +1,6 @@
 /**
  * Vertical Slice #5 — Referee Scoring + Admin Verify
- * Warm-up → Start → +1… → Finish → Verify
+ * Warm-up → Start → + Point… → Finish → Verify
  * Also asserts referee cannot verify (MATCH-10).
  *
  * Run: npx tsx scripts/dod-scoring.ts
@@ -214,7 +214,7 @@ async function main() {
       .waitFor({ state: 'visible' });
 
     // one_set_4_gp_tb3: 4 games × 4 points = 16 points to win 4–0
-    const pointA = page.getByRole('button', { name: /^\+1 / }).first();
+    const pointA = page.getByRole('button', { name: /^\+ Point$/i }).first();
     for (let i = 0; i < 16; i += 1) {
       await pointA.click();
       await page.waitForTimeout(120);
