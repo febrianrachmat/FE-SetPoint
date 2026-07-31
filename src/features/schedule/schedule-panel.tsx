@@ -25,9 +25,43 @@ import {
   publishScheduleVersion,
   reviewScheduleVersion,
   unlockSchedule,
+  updateScheduleEntry,
+  type ScheduleEntry,
 } from '@/lib/api/schedule';
 import { getErrorMessage } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
+
+function pad2(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+function toDateInputValue(date = new Date()) {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+function toTimeInputValue(date = new Date()) {
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+function toDateTimeLocalValue(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${toDateInputValue(date)}T${toTimeInputValue(date)}`;
+}
+
+function combineLocalDateAndTime(date: string, time: string) {
+  if (!date || !time) return null;
+  const parsed = new Date(`${date}T${time}:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
+}
+
+function localDateTimeToIso(value: string) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
+}
 
 function formatWhen(value: string) {
   try {
@@ -50,6 +84,149 @@ function matchLabel(entry: {
   return group ? `${group} · ${sides}` : sides;
 }
 
+function ScheduleEntryRow({
+  entry,
+  editable,
+  busy,
+  onSave,
+}: {
+  entry: ScheduleEntry;
+  editable: boolean;
+  busy: boolean;
+  onSave: (input: {
+    scheduledStartAt: string;
+    scheduledEndAt?: string;
+  }) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [startLocal, setStartLocal] = useState(
+    toDateTimeLocalValue(entry.scheduledStartAt),
+  );
+  const [endLocal, setEndLocal] = useState(
+    entry.scheduledEndAt ? toDateTimeLocalValue(entry.scheduledEndAt) : '',
+  );
+  const [saving, setSaving] = useState(false);
+
+  const openEditor = () => {
+    setStartLocal(toDateTimeLocalValue(entry.scheduledStartAt));
+    setEndLocal(
+      entry.scheduledEndAt ? toDateTimeLocalValue(entry.scheduledEndAt) : '',
+    );
+    setEditing(true);
+  };
+
+  const save = async () => {
+    const scheduledStartAt = localDateTimeToIso(startLocal);
+    if (!scheduledStartAt) {
+      toast.error('Start date/time is invalid');
+      return;
+    }
+    const scheduledEndAt = endLocal ? localDateTimeToIso(endLocal) : undefined;
+    if (endLocal && !scheduledEndAt) {
+      toast.error('End date/time is invalid');
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave({
+        scheduledStartAt,
+        ...(scheduledEndAt ? { scheduledEndAt } : {}),
+      });
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border px-3 py-2 text-sm">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="font-medium">
+            #{entry.sequenceOrder} · {matchLabel(entry)}
+          </p>
+          {!editing ? (
+            <button
+              type="button"
+              disabled={!editable || busy}
+              onClick={openEditor}
+              className={cn(
+                'mt-0.5 text-left text-muted-foreground transition-colors',
+                editable && !busy
+                  ? 'underline decoration-dotted underline-offset-2 hover:text-foreground'
+                  : 'cursor-default',
+              )}
+              title={editable ? 'Edit schedule' : undefined}
+            >
+              {formatWhen(entry.scheduledStartAt)}
+              {entry.scheduledEndAt
+                ? ` → ${formatWhen(entry.scheduledEndAt)}`
+                : ''}
+            </button>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground">
+            {entry.court
+              ? `${entry.court.label} — ${entry.court.name}`
+              : 'No court'}
+          </span>
+          {editable && !editing ? (
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={busy}
+              onClick={openEditor}
+            >
+              Edit
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      {editing ? (
+        <div className="grid gap-3 rounded-md bg-muted/40 p-3 sm:grid-cols-[1fr_1fr_auto_auto]">
+          <div className="space-y-1.5">
+            <Label htmlFor={`start-${entry.id}`}>Start</Label>
+            <Input
+              id={`start-${entry.id}`}
+              type="datetime-local"
+              value={startLocal}
+              onChange={(event) => setStartLocal(event.target.value)}
+              disabled={saving}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`end-${entry.id}`}>End</Label>
+            <Input
+              id={`end-${entry.id}`}
+              type="datetime-local"
+              value={endLocal}
+              onChange={(event) => setEndLocal(event.target.value)}
+              disabled={saving}
+            />
+          </div>
+          <div className="flex items-end">
+            <Button size="sm" disabled={saving} onClick={() => void save()}>
+              {saving ? 'Saving…' : 'Save'}
+            </Button>
+          </div>
+          <div className="flex items-end">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={saving}
+              onClick={() => setEditing(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function SchedulePanel({
   tournamentId,
   categoryId,
@@ -58,7 +235,12 @@ export function SchedulePanel({
   categoryId: string;
 }) {
   const queryClient = useQueryClient();
+  const now = useMemo(() => new Date(), []);
   const [matchDurationMinutes, setMatchDurationMinutes] = useState('90');
+  const [startDate, setStartDate] = useState(toDateInputValue(now));
+  const [firstMatchStartTime, setFirstMatchStartTime] = useState(
+    toTimeInputValue(now),
+  );
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [unlockReason, setUnlockReason] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
@@ -102,7 +284,12 @@ export function SchedulePanel({
   const generateMutation = useMutation({
     mutationFn: () => {
       const minutes = Number(matchDurationMinutes);
+      const startAt = combineLocalDateAndTime(startDate, firstMatchStartTime);
+      if (!startAt) {
+        throw new Error('Start date and first match start time are required');
+      }
       return generateSchedule(tournamentId, categoryId, {
+        startAt,
         matchDurationMinutes:
           Number.isFinite(minutes) && minutes >= 15 ? minutes : 90,
       });
@@ -161,6 +348,34 @@ export function SchedulePanel({
     onError: (error) => setActionError(getErrorMessage(error)),
   });
 
+  const rescheduleMutation = useMutation({
+    mutationFn: (input: {
+      entryId: string;
+      scheduledStartAt: string;
+      scheduledEndAt?: string;
+    }) =>
+      updateScheduleEntry(
+        tournamentId,
+        categoryId,
+        activeVersionId!,
+        input.entryId,
+        {
+          scheduledStartAt: input.scheduledStartAt,
+          scheduledEndAt: input.scheduledEndAt,
+        },
+      ),
+    onSuccess: async () => {
+      setActionError(null);
+      await invalidate();
+      toast.success('Match schedule updated');
+    },
+    onError: (error) => {
+      const message = getErrorMessage(error);
+      setActionError(message);
+      toast.error(message);
+    },
+  });
+
   if (scheduleQuery.isLoading || versionsQuery.isLoading) {
     return <p className="text-sm text-muted-foreground">Loading schedule…</p>;
   }
@@ -190,6 +405,18 @@ export function SchedulePanel({
     version?.reviewOutcome === 'approved' &&
     !version.officialFlag;
   const liveReady = published && locked;
+  const canEditEntries =
+    Boolean(activeVersionId) &&
+    !locked &&
+    version != null &&
+    version.versionStatus !== 'historical';
+  const busy =
+    generateMutation.isPending ||
+    reviewMutation.isPending ||
+    publishMutation.isPending ||
+    lockMutation.isPending ||
+    unlockMutation.isPending ||
+    rescheduleMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -237,10 +464,30 @@ export function SchedulePanel({
             <CardHeader>
               <CardTitle>Generate</CardTitle>
               <CardDescription>
-                Needs Schedule Ready Drawing and at least one available court.
+                Set when the first match starts, then generate slots onto courts.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Start date</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(event) => setStartDate(event.target.value)}
+                  disabled={locked}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="firstMatchStartTime">First match start time</Label>
+                <Input
+                  id="firstMatchStartTime"
+                  type="time"
+                  value={firstMatchStartTime}
+                  onChange={(event) => setFirstMatchStartTime(event.target.value)}
+                  disabled={locked}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="matchDurationMinutes">Match duration (min)</Label>
                 <Input
@@ -387,6 +634,11 @@ export function SchedulePanel({
                 {version.reviewOutcome
                   ? ` · review ${version.reviewOutcome}`
                   : ''}
+                {canEditEntries
+                  ? ' · click a time or Edit to reschedule'
+                  : locked
+                    ? ' · unlock to edit times'
+                    : ''}
               </CardDescription>
             ) : (
               <CardDescription>
@@ -406,27 +658,18 @@ export function SchedulePanel({
             {version ? (
               <div className="space-y-2">
                 {version.entries.map((entry) => (
-                  <div
+                  <ScheduleEntryRow
                     key={entry.id}
-                    className="flex flex-col gap-1 rounded-md border px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        #{entry.sequenceOrder} · {matchLabel(entry)}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {formatWhen(entry.scheduledStartAt)}
-                        {entry.scheduledEndAt
-                          ? ` → ${formatWhen(entry.scheduledEndAt)}`
-                          : ''}
-                      </p>
-                    </div>
-                    <span className="text-muted-foreground">
-                      {entry.court
-                        ? `${entry.court.label} — ${entry.court.name}`
-                        : 'No court'}
-                    </span>
-                  </div>
+                    entry={entry}
+                    editable={canEditEntries}
+                    busy={busy}
+                    onSave={async (input) => {
+                      await rescheduleMutation.mutateAsync({
+                        entryId: entry.id,
+                        ...input,
+                      });
+                    }}
+                  />
                 ))}
               </div>
             ) : null}

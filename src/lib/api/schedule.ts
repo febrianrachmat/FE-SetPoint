@@ -114,6 +114,20 @@ export function generateSchedule(
   );
 }
 
+export function updateScheduleEntry(
+  tournamentId: string,
+  categoryId: string,
+  versionId: string,
+  entryId: string,
+  body: { scheduledStartAt: string; scheduledEndAt?: string },
+) {
+  return api<ScheduleEntry>(
+    'patch',
+    `${base(tournamentId, categoryId)}/versions/${versionId}/entries/${entryId}`,
+    { body },
+  );
+}
+
 export function reviewScheduleVersion(
   tournamentId: string,
   categoryId: string,
