@@ -15,7 +15,7 @@ export default async function NewCategoryPage({
 }) {
   const { tournamentId } = await params;
   return (
-    <div className="mx-auto max-w-lg space-y-4">
+    <div className="mx-auto max-w-xl space-y-4">
       <p className="text-sm text-muted-foreground">
         <Link href={`/tournaments/${tournamentId}`} className="hover:underline">
           Tournament
@@ -27,7 +27,7 @@ export default async function NewCategoryPage({
         <CardHeader>
           <CardTitle>Create category</CardTitle>
           <CardDescription>
-            Choose group or knockout. Scoring template: one_set_4_gp_tb3
+            Set format, groups, and game rules (sets, games, deuce, tie-break).
           </CardDescription>
         </CardHeader>
         <CardContent>

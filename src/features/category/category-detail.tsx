@@ -48,7 +48,40 @@ export function CategoryDetail({
   const category = categoryQuery.data;
   const mode =
     (category.configuration?.competitionMode as string | undefined) ?? 'unknown';
+  const scoring = (category.configuration?.scoring ?? null) as
+    | {
+        matchFormat?: string;
+        gamesTo?: number;
+        deuceMode?: string;
+        tieBreak?: { atGames?: number; pointsTo?: number };
+      }
+    | null;
   const teams = teamsQuery.data?.items ?? [];
+
+  const matchFormatLabel =
+    scoring?.matchFormat === 'best_of_3'
+      ? 'Best of 3'
+      : scoring?.matchFormat === 'best_of_5'
+        ? 'Best of 5'
+        : scoring?.matchFormat === 'best_of_1'
+          ? '1 set'
+          : null;
+  const deuceLabel =
+    scoring?.deuceMode === 'advantage'
+      ? 'advantage'
+      : scoring?.deuceMode === 'golden_point'
+        ? 'golden point'
+        : null;
+  const scoringSummary = [
+    matchFormatLabel,
+    scoring?.gamesTo != null ? `to ${scoring.gamesTo} games` : null,
+    deuceLabel,
+    scoring?.tieBreak?.atGames != null && scoring.tieBreak.pointsTo != null
+      ? `TB ${scoring.tieBreak.atGames}–${scoring.tieBreak.atGames} to ${scoring.tieBreak.pointsTo}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <div className="space-y-6">
@@ -64,6 +97,9 @@ export function CategoryDetail({
         <p className="text-muted-foreground">
           {category.format} · {mode}
         </p>
+        {scoringSummary ? (
+          <p className="mt-1 text-sm text-muted-foreground">{scoringSummary}</p>
+        ) : null}
       </div>
 
       <Card>
