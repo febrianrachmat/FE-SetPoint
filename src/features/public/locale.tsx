@@ -47,14 +47,23 @@ const dict: Dictionary = {
   },
   'list.open': { en: 'Open hub', id: 'Buka hub' },
   'hub.back': { en: 'Tournaments', id: 'Turnamen' },
-  'hub.placeholderTitle': { en: 'Tournament hub', id: 'Hub turnamen' },
-  'hub.placeholderBody': {
-    en: 'Live matches, schedule, drawing, and standings will appear here next. For now this page confirms the public route for guests.',
-    id: 'Match live, jadwal, drawing, dan standing akan muncul di sini berikutnya. Untuk sekarang halaman ini mengunci rute publik untuk guest.',
+  'hub.category': { en: 'Category', id: 'Kategori' },
+  'hub.noCategories': {
+    en: 'No categories in this tournament yet.',
+    id: 'Belum ada kategori di turnamen ini.',
   },
-  'hub.sectionsHint': {
-    en: 'Coming sections: live matches · court schedule · drawing · standings · playoff',
-    id: 'Section berikutnya: match live · jadwal lapangan · drawing · standing · playoff',
+  'hub.tab.live': { en: 'Live', id: 'Langsung' },
+  'hub.tab.schedule': { en: 'Schedule', id: 'Jadwal' },
+  'hub.tab.drawing': { en: 'Drawing', id: 'Drawing' },
+  'hub.tab.standings': { en: 'Standings', id: 'Standing' },
+  'hub.tab.playoff': { en: 'Playoff', id: 'Playoff' },
+  'hub.empty': {
+    en: 'Nothing to show here yet.',
+    id: 'Belum ada data di section ini.',
+  },
+  'hub.notReady': {
+    en: 'Not ready for guests yet.',
+    id: 'Belum siap ditampilkan ke penonton.',
   },
 };
 
