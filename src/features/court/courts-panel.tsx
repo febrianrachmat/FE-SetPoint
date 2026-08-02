@@ -59,7 +59,7 @@ export function CourtsPanel({ tournamentId }: { tournamentId: string }) {
     <div className="space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">
-          <Link href={`/tournaments/${tournamentId}`} className="hover:underline">
+          <Link href={`/manage/tournaments/${tournamentId}`} className="hover:underline">
             Tournament
           </Link>
           {' / '}

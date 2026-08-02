@@ -47,7 +47,7 @@ export function TournamentList() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/tournaments/new">
+          <Link href="/manage/tournaments/new">
             <Plus className="size-4" />
             New tournament
           </Link>
@@ -66,7 +66,7 @@ export function TournamentList() {
       ) : (
         <div className="grid gap-3">
           {items.map((tournament) => (
-            <Link key={tournament.id} href={`/tournaments/${tournament.id}`}>
+            <Link key={tournament.id} href={`/manage/tournaments/${tournament.id}`}>
               <Card className="transition-colors hover:border-foreground/20">
                 <CardContent className="flex items-center justify-between gap-4 py-4">
                   <div>

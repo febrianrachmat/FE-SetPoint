@@ -87,7 +87,7 @@ export function CategoryDetail({
     <div className="space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">
-          <Link href={`/tournaments/${tournamentId}`} className="hover:underline">
+          <Link href={`/manage/tournaments/${tournamentId}`} className="hover:underline">
             Tournament
           </Link>
           {' / '}
@@ -110,7 +110,7 @@ export function CategoryDetail({
           </div>
           <Button asChild size="sm">
             <Link
-              href={`/tournaments/${tournamentId}/categories/${categoryId}/teams`}
+              href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/teams`}
             >
               Manage teams
             </Link>
@@ -158,7 +158,7 @@ export function CategoryDetail({
               </div>
               <Button asChild size="sm">
                 <Link
-                  href={`/tournaments/${tournamentId}/categories/${categoryId}/drawing`}
+                  href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/drawing`}
                 >
                   Open drawing
                 </Link>
@@ -182,7 +182,7 @@ export function CategoryDetail({
               </div>
               <Button asChild size="sm" variant="outline">
                 <Link
-                  href={`/tournaments/${tournamentId}/categories/${categoryId}/schedule`}
+                  href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/schedule`}
                 >
                   Open schedule
                 </Link>
@@ -207,7 +207,7 @@ export function CategoryDetail({
               </div>
               <Button asChild size="sm" variant="outline">
                 <Link
-                  href={`/tournaments/${tournamentId}/categories/${categoryId}/matches`}
+                  href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/matches`}
                 >
                   Open monitor
                 </Link>
@@ -231,7 +231,7 @@ export function CategoryDetail({
               </div>
               <Button asChild size="sm" variant="outline">
                 <Link
-                  href={`/tournaments/${tournamentId}/categories/${categoryId}/standings`}
+                  href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/standings`}
                 >
                   Open standings
                 </Link>
@@ -254,7 +254,7 @@ export function CategoryDetail({
               </div>
               <Button asChild size="sm" variant="outline">
                 <Link
-                  href={`/tournaments/${tournamentId}/categories/${categoryId}/playoff`}
+                  href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/playoff`}
                 >
                   Open playoff
                 </Link>
@@ -277,7 +277,7 @@ export function CategoryDetail({
               </div>
               <Button asChild size="sm" variant="outline">
                 <Link
-                  href={`/tournaments/${tournamentId}/categories/${categoryId}/champion`}
+                  href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/champion`}
                 >
                   Open champion
                 </Link>

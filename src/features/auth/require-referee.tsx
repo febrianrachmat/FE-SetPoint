@@ -16,7 +16,7 @@ export function RequireReferee({ children }: { children: React.ReactNode }) {
       return;
     }
     if (!isRefereeOnly(user) && user) {
-      router.replace('/tournaments');
+      router.replace('/manage/tournaments');
     }
   }, [isLoading, isAuthenticated, user, router]);
 

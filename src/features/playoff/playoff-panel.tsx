@@ -189,7 +189,7 @@ export function PlayoffPanel({
         <div>
           <p className="text-sm text-muted-foreground">
             <Link
-              href={`/tournaments/${tournamentId}/categories/${categoryId}`}
+              href={`/manage/tournaments/${tournamentId}/categories/${categoryId}`}
               className="hover:underline"
             >
               Category
@@ -217,7 +217,7 @@ export function PlayoffPanel({
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
             <Link
-              href={`/tournaments/${tournamentId}/categories/${categoryId}/champion`}
+              href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/champion`}
             >
               View Champion
             </Link>
@@ -429,7 +429,7 @@ export function PlayoffPanel({
                       <div className="mt-3">
                         <Button asChild size="sm" variant="outline">
                           <Link
-                            href={`/tournaments/${tournamentId}/categories/${categoryId}/matches/${match.id}`}
+                            href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/matches/${match.id}`}
                           >
                             Open Match
                           </Link>

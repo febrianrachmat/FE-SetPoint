@@ -102,7 +102,7 @@ function MatchCard({
 }) {
   const score = scoreLabel(match);
   const referees = match.refereeAssignments;
-  const deskHref = `/tournaments/${tournamentId}/categories/${categoryId}/matches/${match.id}`;
+  const deskHref = `/manage/tournaments/${tournamentId}/categories/${categoryId}/matches/${match.id}`;
 
   return (
     <article
@@ -334,12 +334,12 @@ export function MatchMonitor({
     <div className="space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">
-          <Link href={`/tournaments/${tournamentId}`} className="hover:underline">
+          <Link href={`/manage/tournaments/${tournamentId}`} className="hover:underline">
             Tournament
           </Link>
           {' / '}
           <Link
-            href={`/tournaments/${tournamentId}/categories/${categoryId}`}
+            href={`/manage/tournaments/${tournamentId}/categories/${categoryId}`}
             className="hover:underline"
           >
             Category
@@ -373,7 +373,7 @@ export function MatchMonitor({
             Live.
             {' '}
             <Link
-              href={`/tournaments/${tournamentId}/categories/${categoryId}/schedule`}
+              href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/schedule`}
               className="underline"
             >
               Open schedule

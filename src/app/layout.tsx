@@ -16,8 +16,9 @@ const sans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Set Point — Organizer',
-  description: 'Organizer dashboard for Set Point padel tournaments',
+  title: 'Set Point',
+  description:
+    'Padel tournament platform with live scoring for organizers, referees, and guests.',
 };
 
 export default function RootLayout({

@@ -36,7 +36,7 @@ export function CreateTournamentForm() {
     onSuccess: async (tournament) => {
       await queryClient.invalidateQueries({ queryKey: ['tournaments'] });
       toast.success('Tournament created');
-      router.push(`/tournaments/${tournament.id}`);
+      router.push(`/manage/tournaments/${tournament.id}`);
     },
     onError: (error) => {
       setFormError(getErrorMessage(error));

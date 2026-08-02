@@ -187,12 +187,12 @@ export function StandingPanel({
     <div className="space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">
-          <Link href={`/tournaments/${tournamentId}`} className="hover:underline">
+          <Link href={`/manage/tournaments/${tournamentId}`} className="hover:underline">
             Tournament
           </Link>
           {' / '}
           <Link
-            href={`/tournaments/${tournamentId}/categories/${categoryId}`}
+            href={`/manage/tournaments/${tournamentId}/categories/${categoryId}`}
             className="hover:underline"
           >
             Category

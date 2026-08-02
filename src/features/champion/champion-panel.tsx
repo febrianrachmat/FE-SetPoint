@@ -42,7 +42,7 @@ export function ChampionPanel({
       <div>
         <p className="text-sm text-muted-foreground">
           <Link
-            href={`/tournaments/${tournamentId}/categories/${categoryId}`}
+            href={`/manage/tournaments/${tournamentId}/categories/${categoryId}`}
             className="hover:underline"
           >
             Category
@@ -67,7 +67,7 @@ export function ChampionPanel({
           </p>
           <Button asChild className="mt-6" variant="outline">
             <Link
-              href={`/tournaments/${tournamentId}/categories/${categoryId}/playoff`}
+              href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/playoff`}
             >
               Open playoff
             </Link>
@@ -103,7 +103,7 @@ export function ChampionPanel({
         </Button>
         <Button asChild variant="outline" size="sm">
           <Link
-            href={`/tournaments/${tournamentId}/categories/${categoryId}/playoff`}
+            href={`/manage/tournaments/${tournamentId}/categories/${categoryId}/playoff`}
           >
             Back to playoff
           </Link>

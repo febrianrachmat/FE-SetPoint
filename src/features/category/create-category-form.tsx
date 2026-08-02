@@ -239,7 +239,7 @@ export function CreateCategoryForm({ tournamentId }: { tournamentId: string }) {
     onSuccess: async (category) => {
       await queryClient.invalidateQueries({ queryKey: ['categories', tournamentId] });
       toast.success('Category created');
-      router.push(`/tournaments/${tournamentId}/categories/${category.id}`);
+      router.push(`/manage/tournaments/${tournamentId}/categories/${category.id}`);
     },
     onError: (error) => setFormError(getErrorMessage(error)),
   });

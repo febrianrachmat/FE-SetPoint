@@ -48,7 +48,7 @@ async function main() {
     await page.locator('button[type="submit"]').click();
     await page.waitForFunction(
       () =>
-        location.pathname.replace(/\/$/, '') === '/tournaments' ||
+        location.pathname.replace(/\/$/, '') === '/manage/tournaments' ||
         document.body.innerText.includes('Could not sign in'),
       null,
       { timeout: 60000 },
@@ -58,12 +58,12 @@ async function main() {
     }
 
     await page.getByRole('link', { name: /New tournament/i }).click();
-    await page.waitForURL((url) => url.pathname.includes('/tournaments/new'));
+    await page.waitForURL((url) => url.pathname.includes('/manage/tournaments/new'));
     const name = `Drawing UI ${stamp}`;
     await page.locator('#name').fill(name);
     await Promise.all([
       page.waitForURL((url) =>
-        /\/tournaments\/[0-9a-f-]{36}$/i.test(url.pathname),
+        /\/manage\/tournaments\/[0-9a-f-]{36}$/i.test(url.pathname),
       ),
       page.getByRole('button', { name: /Create tournament/i }).click(),
     ]);
@@ -100,7 +100,7 @@ async function main() {
     console.log('   [ok] 8 teams registered via API');
 
     await page.goto(
-      `${FE}/tournaments/${tournamentId}/categories/${categoryId}/drawing`,
+      `${FE}/manage/tournaments/${tournamentId}/categories/${categoryId}/drawing`,
       { waitUntil: 'networkidle' },
     );
     await page.getByRole('button', { name: /Generate version/i }).click();

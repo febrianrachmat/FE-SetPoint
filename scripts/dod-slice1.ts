@@ -59,7 +59,7 @@ async function main() {
     await fillById(page, 'password', 'Password123!');
     await Promise.all([
       page.waitForURL(
-        (url) => url.pathname.replace(/\/$/, '') === '/tournaments',
+        (url) => url.pathname.replace(/\/$/, '') === '/manage/tournaments',
         { timeout: 30000 },
       ),
       clickSubmit(page, /Sign in/i),
@@ -70,12 +70,12 @@ async function main() {
     // 2. Create Tournament
     console.log('-- Create Tournament');
     await page.getByRole('link', { name: /New tournament/i }).click();
-    await page.waitForURL((url) => url.pathname.includes('/tournaments/new'));
+    await page.waitForURL((url) => url.pathname.includes('/manage/tournaments/new'));
     await fillById(page, 'name', tournamentName);
     await fillById(page, 'description', 'DoD automated checklist');
     await Promise.all([
       page.waitForURL((url) =>
-        /\/tournaments\/[0-9a-f-]{36}$/i.test(url.pathname),
+        /\/manage\/tournaments\/[0-9a-f-]{36}$/i.test(url.pathname),
       ),
       clickSubmit(page, /Create tournament/i),
     ]);
@@ -119,7 +119,7 @@ async function main() {
 
     // 6. Create Court
     console.log('-- Create Court');
-    await page.goto(`${FE}/tournaments/${tournamentId}/courts`, {
+    await page.goto(`${FE}/manage/tournaments/${tournamentId}/courts`, {
       waitUntil: 'networkidle',
     });
     await fillById(page, 'name', 'DoD Center Court');
@@ -132,7 +132,7 @@ async function main() {
     console.log('-- Refresh persistence');
     await page.reload({ waitUntil: 'networkidle' });
     await expectVisible(page, courtLabel);
-    await page.goto(`${FE}/tournaments/${tournamentId}`, {
+    await page.goto(`${FE}/manage/tournaments/${tournamentId}`, {
       waitUntil: 'networkidle',
     });
     await expectVisible(page, tournamentName);
@@ -140,7 +140,7 @@ async function main() {
     await expectVisible(page, 'Open Doubles');
     await expectVisible(page, courtLabel);
     await page.goto(
-      `${FE}/tournaments/${tournamentId}/categories/${categoryId}/teams`,
+      `${FE}/manage/tournaments/${tournamentId}/categories/${categoryId}/teams`,
       { waitUntil: 'networkidle' },
     );
     await expectVisible(page, `DoD Team ${stamp}`);
@@ -148,7 +148,7 @@ async function main() {
 
     // 8. Backend 409 surfaces via wrapper
     console.log('-- Error surfacing (409 duplicate court label)');
-    await page.goto(`${FE}/tournaments/${tournamentId}/courts`, {
+    await page.goto(`${FE}/manage/tournaments/${tournamentId}/courts`, {
       waitUntil: 'networkidle',
     });
     await fillById(page, 'name', 'Duplicate Court');
@@ -194,7 +194,7 @@ async function main() {
     await page.getByRole('button', { name: /Log out/i }).click();
     await page.waitForURL((url) => url.pathname.replace(/\/$/, '') === '/login');
     await expectVisible(page, /Organizer sign in|Welcome back/i);
-    await page.goto(`${FE}/tournaments`, { waitUntil: 'networkidle' });
+    await page.goto(`${FE}/manage/tournaments`, { waitUntil: 'networkidle' });
     await page.waitForURL((url) => url.pathname.replace(/\/$/, '') === '/login');
     pass('Logout / expired session returns to login');
   } catch (error) {

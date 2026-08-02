@@ -257,7 +257,7 @@ export function MatchScoringPanel({
   const canAssign = allowAssign ?? admin;
   const monitorHref =
     backHref ??
-    `/tournaments/${tournamentId}/categories/${categoryId}/matches`;
+    `/manage/tournaments/${tournamentId}/categories/${categoryId}/matches`;
 
   const queryClient = useQueryClient();
   const [actionError, setActionError] = useState<string | null>(null);

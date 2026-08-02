@@ -17,7 +17,7 @@ export default async function NewCategoryPage({
   return (
     <div className="mx-auto max-w-xl space-y-4">
       <p className="text-sm text-muted-foreground">
-        <Link href={`/tournaments/${tournamentId}`} className="hover:underline">
+        <Link href={`/manage/tournaments/${tournamentId}`} className="hover:underline">
           Tournament
         </Link>
         {' / '}

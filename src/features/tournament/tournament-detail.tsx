@@ -132,7 +132,7 @@ export function TournamentDetail({ tournamentId }: { tournamentId: string }) {
               <CardDescription>Competition divisions in this event</CardDescription>
             </div>
             <Button asChild size="sm" variant="outline">
-              <Link href={`/tournaments/${tournamentId}/categories/new`}>Add</Link>
+              <Link href={`/manage/tournaments/${tournamentId}/categories/new`}>Add</Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -147,7 +147,7 @@ export function TournamentDetail({ tournamentId }: { tournamentId: string }) {
               categories.map((category) => (
                 <Link
                   key={category.id}
-                  href={`/tournaments/${tournamentId}/categories/${category.id}`}
+                  href={`/manage/tournaments/${tournamentId}/categories/${category.id}`}
                   className="flex items-center justify-between rounded-md border px-3 py-2 text-sm hover:bg-muted/50"
                 >
                   <span>{category.name}</span>
@@ -169,7 +169,7 @@ export function TournamentDetail({ tournamentId }: { tournamentId: string }) {
               </CardDescription>
             </div>
             <Button asChild size="sm" variant="outline">
-              <Link href={`/tournaments/${tournamentId}/courts`}>Manage</Link>
+              <Link href={`/manage/tournaments/${tournamentId}/courts`}>Manage</Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-2">

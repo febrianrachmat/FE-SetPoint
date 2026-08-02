@@ -76,7 +76,7 @@ export function TeamsPanel({
       <div>
         <p className="text-sm text-muted-foreground">
           <Link
-            href={`/tournaments/${tournamentId}/categories/${categoryId}`}
+            href={`/manage/tournaments/${tournamentId}/categories/${categoryId}`}
             className="hover:underline"
           >
             Category

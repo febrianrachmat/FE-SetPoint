@@ -15,5 +15,5 @@ export function isRefereeOnly(user: AuthUser | null | undefined) {
 
 export function homePathForUser(user: AuthUser | null | undefined) {
   if (isRefereeOnly(user)) return '/referee';
-  return '/tournaments';
+  return '/manage/tournaments';
 }

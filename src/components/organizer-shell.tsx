@@ -17,15 +17,15 @@ export function OrganizerShell({ children }: { children: React.ReactNode }) {
       <header className="border-b border-border/70 bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-6">
-            <Link href="/tournaments" className="font-heading text-lg tracking-tight">
+            <Link href="/manage/tournaments" className="font-heading text-lg tracking-tight">
               Set Point
             </Link>
             <nav className="flex items-center gap-1 text-sm">
               <Link
-                href="/tournaments"
+                href="/manage/tournaments"
                 className={cn(
                   'rounded-md px-3 py-1.5 transition-colors',
-                  pathname.startsWith('/tournaments')
+                  pathname.startsWith('/manage/tournaments')
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground',
                 )}

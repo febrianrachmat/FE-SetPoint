@@ -12,7 +12,7 @@ export default function NewTournamentPage() {
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <p className="text-sm text-muted-foreground">
-        <Link href="/tournaments" className="hover:underline">
+        <Link href="/manage/tournaments" className="hover:underline">
           Tournaments
         </Link>
         {' / '}

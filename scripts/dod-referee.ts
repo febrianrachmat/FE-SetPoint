@@ -104,11 +104,11 @@ async function main() {
     );
 
     await page.getByRole('link', { name: /New tournament/i }).click();
-    await page.waitForURL((url) => url.pathname.includes('/tournaments/new'));
+    await page.waitForURL((url) => url.pathname.includes('/manage/tournaments/new'));
     await page.locator('#name').fill(`Referee UI ${stamp}`);
     await Promise.all([
       page.waitForURL((url) =>
-        /\/tournaments\/[0-9a-f-]{36}$/i.test(url.pathname),
+        /\/manage\/tournaments\/[0-9a-f-]{36}$/i.test(url.pathname),
       ),
       page.getByRole('button', { name: /Create tournament/i }).click(),
     ]);
@@ -152,12 +152,12 @@ async function main() {
     }
 
     await page.goto(
-      `${FE}/tournaments/${tournamentId}/categories/${categoryId}/drawing`,
+      `${FE}/manage/tournaments/${tournamentId}/categories/${categoryId}/drawing`,
       { waitUntil: 'networkidle' },
     );
     await lifecycleToOfficialLocked(page, 'drawing');
     await page.goto(
-      `${FE}/tournaments/${tournamentId}/categories/${categoryId}/schedule`,
+      `${FE}/manage/tournaments/${tournamentId}/categories/${categoryId}/schedule`,
       { waitUntil: 'networkidle' },
     );
     await lifecycleToOfficialLocked(page, 'schedule');
